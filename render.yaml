@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: vietqr-streamlit
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    repo: https://github.com/yourusername/vietqr-streamlit
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /

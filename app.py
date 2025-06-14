@@ -6,9 +6,8 @@ import io
 from io import BytesIO
 import os
 import base64
-from pyzbar.pyzbar import decode
-import io
-
+import cv2
+import numpy as np
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
@@ -55,11 +54,6 @@ def extract_vietqr_info(payload):
     return info
 
 def decode_qr_image_cv(uploaded_image_bytes):
-    image = Image.open(io.BytesIO(uploaded_image_bytes.read())).convert("RGB")
-    decoded_objects = decode(image)
-    if not decoded_objects:
-        return None
-    return decoded_objects[0].data.decode("utf-8")
     file_bytes = np.asarray(bytearray(uploaded_image_bytes.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     detector = cv2.QRCodeDetector()
