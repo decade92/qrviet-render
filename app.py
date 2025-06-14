@@ -162,6 +162,11 @@ font_css = f"""
 st.markdown(font_css, unsafe_allow_html=True)
 
 # Giao diện người dùng
+st.set_page_config(
+    page_title="VietQR BIDV",
+    page_icon="assets/bidvfa.png",  # hoặc emoji như "🏦"
+    layout="centered"
+)
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS ")
 
 with open("assets/logo_bidv.png", "rb") as f:
