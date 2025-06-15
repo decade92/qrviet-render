@@ -4,13 +4,11 @@ import time
 st.set_page_config(
     page_title="VietQR BIDV",
     page_icon="assets/bidvfa.png",
-    layout="centered"
-    if st.session_state.get("do_rerun", False):
+    layout="centered"   
+)
+if st.session_state.get("do_rerun", False):
     st.session_state["do_rerun"] = False
     st.experimental_rerun()
-
-)
-
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import io
