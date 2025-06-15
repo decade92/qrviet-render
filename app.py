@@ -2,7 +2,7 @@
 import streamlit as st
 st.set_page_config(
     page_title="VietQR BIDV",
-    page_icon="assets/logo_bidv.png",
+    page_icon="assets/bidvfa.png",
     layout="centered"
 )
 
@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
-LOGO_PATH = os.path.join(ASSETS_DIR, "logo_bidv.png")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 
@@ -170,18 +170,22 @@ st.markdown(font_css, unsafe_allow_html=True)
 # Giao diện người dùng
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS ")
 
+# Đọc ảnh logo BIDV
+with open("assets/logo_bidv.png", "rb") as f:
+    logo_data = base64.b64encode(f.read()).decode()
+
+# Hiển thị tiêu đề với logo
 st.markdown(
     f"""
-    <div style="display: flex; align-items: center;">
-        <img src="data:image/png;base64,{base64.b64encode(open(LOGO_PATH, "rb").read()).decode()}" style="max-height:25px; height:25px; width:auto; margin-right:10px;">
-        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:25px; color:#007C71;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <img src="data:image/png;base64,{logo_data}" style="height:30px; width:auto;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:24px; color:#007C71;">
             Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
         </span>
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 # === FORM NHẬP DỮ LIỆU ===
 st.header("📥 Nhập tay hoặc phân tích từ ảnh QR")
