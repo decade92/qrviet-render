@@ -222,17 +222,15 @@ if uploaded_file and uploaded_file.name != st.session_state.get("last_uploaded_f
 if uploaded_file and not st.session_state.get("qr_extracted", False):
     qr_text = decode_qr_image_cv(uploaded_file)
     if qr_text:
-
-    else:
-        st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên. Vui lòng thử lại với ảnh khác.")
         info = extract_vietqr_info(qr_text)
-        # chỉ cập nhật nếu trường đang trống để không ghi đè người dùng đã sửa
         if not st.session_state["account"]: st.session_state["account"] = info.get("account", "")
         if not st.session_state["bank_bin"]: st.session_state["bank_bin"] = info.get("bank_bin", "970418")
         if not st.session_state["note"]: st.session_state["note"] = info.get("note", "")
         if not st.session_state["amount"]: st.session_state["amount"] = info.get("amount", "")
         st.session_state["qr_extracted"] = True
         st.success("✅ Đã trích xuất dữ liệu từ ảnh QR. Bạn có thể sửa lại bên dưới.")
+    else:
+        st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên. Vui lòng thử lại với ảnh khác.")
 
 # Các ô nhập liệu luôn ghi nhận giá trị mới để tạo QR đúng
 account = st.text_input("🔢 Số tài khoản", value=st.session_state["account"])
