@@ -119,7 +119,18 @@ def create_qr_with_background(data, acc_name, merchant_id):
     return buf
 
 # ======== Giao diện ========
+with open(FONT_PATH, "rb") as f:
+    font_data = f.read()
+font_css = f"""
+<style>
+@font-face {{
+    font-family: 'RobotoCustom';
+    src: url(data:font/ttf;base64,{base64.b64encode(font_data).decode()}) format('truetype');
+}}
+</style>
+"""
 st.markdown(font_css, unsafe_allow_html=True)
+
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS")
 
 with open("assets/logo_bidv.png", "rb") as f:
