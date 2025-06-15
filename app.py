@@ -77,7 +77,7 @@ def generate_qr_with_logo(data):
     img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
     logo = Image.open(LOGO_PATH).convert("RGBA").resize((int(img.width*0.45), int(img.height*0.15)))
     img.paste(logo, ((img.width - logo.width) // 2, (img.height - logo.height) // 2), logo)
-    buf = BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
+    buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
     return buf
 
 def create_qr_with_text(data, acc_name, merchant_id):
@@ -98,7 +98,7 @@ def create_qr_with_text(data, acc_name, merchant_id):
         x = (canvas.width - draw.textbbox((0, 0), text, font=font)[2]) // 2
         draw.text((x, y), text, fill=color, font=font)
         y += size + spacing
-    buf = BytesIO(); canvas.save(buf, format="PNG"); buf.seek(0)
+    buf = io.BytesIO(); canvas.save(buf, format="PNG"); buf.seek(0)
     return buf
 
 def create_qr_with_background(data, acc_name, merchant_id):
@@ -115,78 +115,5 @@ def create_qr_with_background(data, acc_name, merchant_id):
     cx = lambda t: (base.width - draw.textbbox((0, 0), t, font=font)[2]) // 2
     draw.text((cx(acc_name.upper()), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
     draw.text((cx(merchant_id), 1815), merchant_id, fill=(0, 102, 102), font=font)
-    buf = BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
+    buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
-
-# ======== Giao diện ========
-with open(FONT_PATH, "rb") as f:
-    font_data = f.read()
-font_css = f"""
-<style>
-@font-face {{
-    font-family: 'RobotoCustom';
-    src: url(data:font/ttf;base64,{base64.b64encode(font_data).decode()}) format('truetype');
-}}
-</style>
-"""
-st.markdown(font_css, unsafe_allow_html=True)
-
-st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS")
-
-with open("assets/logo_bidv.png", "rb") as f:
-    logo_data = base64.b64encode(f.read()).decode()
-
-st.markdown(f"""
-<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-    <img src="data:image/png;base64,{logo_data}" style="height:30px; width:auto;">
-    <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:24px; color:#007C71;">
-        Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
-    </span>
-</div>
-""", unsafe_allow_html=True)
-
-st.header("📥 Nhập tay hoặc phân tích từ ảnh QR")
-
-for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file", "last_file_uploaded"]:
-    if field not in st.session_state:
-        st.session_state[field] = ""
-
-uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
-if uploaded_result:
-    if st.session_state["last_file_uploaded"] != uploaded_result:
-        st.session_state["last_file_uploaded"] = uploaded_result
-        qr_text = decode_qr_image_cv(uploaded_result)
-        if qr_text:
-            info = extract_vietqr_info(qr_text)
-            st.session_state.update({"account": info.get("account", ""), "bank_bin": info.get("bank_bin", "970418"), "note": info.get("note", ""), "amount": info.get("amount", "")})
-            st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
-        else:
-            st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
-
-col1, col2 = st.columns([3, 1])
-with col1:
-    account = st.text_input("🔢 Số tài khoản", st.session_state.get("account", ""))
-    bank_bin = st.text_input("🏦 Mã ngân hàng", st.session_state.get("bank_bin", "970418"))
-    name = st.text_input("👤 Tên tài khoản (nếu có)", st.session_state.get("name", ""))
-    note = st.text_input("📝 Nội dung (nếu có)", st.session_state.get("note", ""))
-    amount = st.text_input("💵 Số tiền (nếu có)", st.session_state.get("amount", ""))
-
-with col2:
-    if st.button("🎉 Tạo mã QR"):
-        if not account.strip():
-            st.warning("⚠️ Vui lòng nhập số tài khoản.")
-        else:
-            qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
-            st.session_state["qr1"] = generate_qr_with_logo(qr_data)
-            st.session_state["qr2"] = create_qr_with_text(qr_data, name.strip(), account.strip())
-            st.session_state["qr3"] = create_qr_with_background(qr_data, name.strip(), account.strip())
-            for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file", "last_file_uploaded"]:
-                st.session_state[key] = ""
-    if st.button("🔄 Làm mới"):
-        st.session_state.clear()
-        st.experimental_rerun()
-
-for idx, label in zip(["qr1", "qr2", "qr3"], ["🏷️ Mẫu 1: QR có logo BIDV", "🧾 Mẫu 2: QR có chữ (tên và số tài khoản)", "🐈‍⬛ Mẫu 3: QR nền mèo thần tài (may mắn)"]):
-    if idx in st.session_state:
-        st.markdown(f"### {label}")
-        st.image(st.session_state[idx], use_container_width=True)
