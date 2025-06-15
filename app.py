@@ -192,19 +192,25 @@ for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
     if field not in st.session_state:
         st.session_state[field] = ""
 
-uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="file_upload")
-if uploaded_file and uploaded_file != st.session_state["uploaded_file"]:
-    st.session_state["uploaded_file"] = uploaded_file
-    qr_text = decode_qr_image_cv(uploaded_file)
-    if qr_text:
-        info = extract_vietqr_info(qr_text)
-        st.session_state["account"] = info.get("account", "")
-        st.session_state["bank_bin"] = info.get("bank_bin", "970418")
-        st.session_state["note"] = info.get("note", "")
-        st.session_state["amount"] = info.get("amount", "")
-        st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
-    else:
-        st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
+# 👉 Khởi tạo duy nhất
+uploaded_file = st.empty()
+uploaded_result = uploaded_file.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
+
+# 👉 Xử lý nếu có file upload
+if uploaded_result is not None:
+    if "last_file_uploaded" not in st.session_state or st.session_state["last_file_uploaded"] != uploaded_result:
+        st.session_state["last_file_uploaded"] = uploaded_result
+        qr_text = decode_qr_image_cv(uploaded_result)
+        if qr_text:
+            info = extract_vietqr_info(qr_text)
+            st.session_state["account"] = info.get("account", "")
+            st.session_state["bank_bin"] = info.get("bank_bin", "970418")
+            st.session_state["note"] = info.get("note", "")
+            st.session_state["amount"] = info.get("amount", "")
+            st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
+        else:
+            st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
+
 
 account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""))
 bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", ""))
