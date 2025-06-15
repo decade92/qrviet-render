@@ -213,7 +213,7 @@ if uploaded_result is not None:
 
 
 account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""))
-bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", ""))
+bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", "970418"))
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""))
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""))
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""))
