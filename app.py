@@ -196,23 +196,30 @@ if uploaded_file:
         st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
 
 account = st.text_input("🔢 Số tài khoản", key="account")
-bank_bin = st.text_input("🏦 Mã ngân hàng", key="bank_bin", value=st.session_state.get("bank_bin", "970418"))
+bank_bin = st.text_input("🏦 Mã ngân hàng", key="bank_bin")
 name = st.text_input("👤 Tên tài khoản (nếu có)", key="name")
 note = st.text_input("📝 Nội dung (nếu có)", key="note")
 amount = st.text_input("💵 Số tiền (nếu có)", key="amount")
 
 if st.button("🎉 Tạo mã QR"):
-    if not account.strip() or not bank_bin.strip():
+    if not all([st.session_state.account.strip(), st.session_state.bank_bin.strip()]):
         st.warning("⚠️ Vui lòng nhập số tài khoản và mã ngân hàng.")
     else:
-        qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
-        st.session_state.qr1 = generate_qr_with_logo(qr_data)
-        st.session_state.qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
-        st.session_state.qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
+        qr_data = build_vietqr_payload(
+            st.session_state.account.strip(),
+            st.session_state.bank_bin.strip(),
+            st.session_state.note.strip(),
+            st.session_state.amount.strip()
+        )
+        st.session_state["qr1"] = generate_qr_with_logo(qr_data)
+        st.session_state["qr2"] = create_qr_with_text(qr_data, st.session_state.name.strip(), st.session_state.account.strip())
+        st.session_state["qr3"] = create_qr_with_background(qr_data, st.session_state.name.strip(), st.session_state.account.strip())
 
-        # Clear form input but keep QR
-        for k in ["account", "bank_bin", "name", "note", "amount", "file"]:
-            st.session_state[k] = ""
+        # ✅ Reset form sau khi tạo QR (nhưng giữ ảnh)
+        for field in ["account", "name", "note", "amount", "uploaded_file"]:
+            st.session_state[field] = ""
+        st.success("✅ Mã QR đã được tạo thành công.")
+
 
 if st.session_state.qr1:
     st.markdown("### 🏷️ Mẫu 1: QR có logo BIDV")
