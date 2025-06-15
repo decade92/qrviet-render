@@ -246,15 +246,3 @@ if "qr3" in st.session_state:
     st.markdown("### 🐈‍⬛ Mẫu 3: QR nền mèo thần tài (may mắn)")
     st.image(st.session_state["qr3"], caption="Mẫu QR nền đẹp", use_container_width=True)
 
-
-# ==== Giao diện và xử lý người dùng ====
-font_css = f"""
-<style>
-@font-face {{
-    font-family: 'RobotoCustom';
-    src: url(data:font/ttf;base64,{base64.b64encode(open(FONT_PATH, "rb").read()).decode()}) format('truetype');
-}}
-</style>
-"""
-st.markdown(font_css, unsafe_allow_html=True)
-
