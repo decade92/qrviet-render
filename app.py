@@ -5,6 +5,10 @@ st.set_page_config(
     page_title="VietQR BIDV",
     page_icon="assets/bidvfa.png",
     layout="centered"
+    if st.session_state.get("do_rerun", False):
+    st.session_state["do_rerun"] = False
+    st.experimental_rerun()
+
 )
 
 import qrcode
@@ -232,13 +236,13 @@ if st.button("🎉 Tạo mã QR"):
         st.session_state["qr2"] = qr2
         st.session_state["qr3"] = qr3
 
-        # Xóa form và input
+# Xoá các trường form (nhưng giữ lại qr1, qr2, qr3)
         for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file', 'last_file_uploaded']:
-            if key in st.session_state:
-                del st.session_state[key]
+            st.session_state.pop(key, None)
+        
+        # Đặt cờ để rerun
+        st.session_state["do_rerun"] = True
 
-        # Rerun để xóa dữ liệu hiển thị trong form
-        st.experimental_rerun()
 
 
 if "qr1" in st.session_state:
