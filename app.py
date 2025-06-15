@@ -2,7 +2,7 @@
 import streamlit as st
 st.set_page_config(
     page_title="VietQR BIDV",
-    page_icon="assets/bidvfa.png",
+    page_icon="assets/logo_bidv.png",
     layout="centered"
 )
 
@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
-LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo_bidv.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 
@@ -170,23 +170,17 @@ st.markdown(font_css, unsafe_allow_html=True)
 # Giao diện người dùng
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS ")
 
-# Đọc ảnh logo BIDV
-with open("assets/logo_bidv.png", "rb") as f:
-    logo_data = base64.b64encode(f.read()).decode()
-
-# Hiển thị tiêu đề với logo
 st.markdown(
     f"""
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <img src="data:image/png;base64,{logo_data}" style="height:30px; width:auto;">
-        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:24px; color:#007C71;">
+    <div style="display: flex; align-items: center;">
+        <img src="data:image/png;base64,{base64.b64encode(open(LOGO_PATH, "rb").read()).decode()}" style="max-height:25px; height:25px; width:auto; margin-right:10px;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:25px; color:#007C71;">
             Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
         </span>
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 
 # === FORM NHẬP DỮ LIỆU ===
@@ -211,28 +205,30 @@ for key in ["account", "bank_bin", "name", "note", "amount"]:
     if key not in st.session_state:
         st.session_state[key] = ""
 
+
+# === QUẢN LÝ SESSION_STATE ===
+for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
+    if key not in st.session_state:
+        st.session_state[key] = ""
+
 uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
 
-# Reset decode nếu up ảnh mới
-if uploaded_file and uploaded_file.name != st.session_state.get("last_uploaded_file"):
-    st.session_state["qr_extracted"] = False
-    st.session_state["last_uploaded_file"] = uploaded_file.name
+# Chỉ decode ảnh 1 lần nếu là file mới
+if uploaded_file:
+    if uploaded_file != st.session_state["uploaded_file"]:
+        st.session_state["uploaded_file"] = uploaded_file
+        qr_text = decode_qr_image_cv(uploaded_file)
+        if qr_text:
+            info = extract_vietqr_info(qr_text)
+            st.session_state["account"] = info.get("account", "")
+            st.session_state["bank_bin"] = info.get("bank_bin", "970418")
+            st.session_state["note"] = info.get("note", "")
+            st.session_state["amount"] = info.get("amount", "")
+            st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
+        else:
+            st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
 
-# Decode nếu chưa decode ảnh hiện tại
-if uploaded_file and not st.session_state.get("qr_extracted", False):
-    qr_text = decode_qr_image_cv(uploaded_file)
-    if qr_text:
-        info = extract_vietqr_info(qr_text)
-        if not st.session_state["account"]: st.session_state["account"] = info.get("account", "")
-        if not st.session_state["bank_bin"]: st.session_state["bank_bin"] = info.get("bank_bin", "970418")
-        if not st.session_state["note"]: st.session_state["note"] = info.get("note", "")
-        if not st.session_state["amount"]: st.session_state["amount"] = info.get("amount", "")
-        st.session_state["qr_extracted"] = True
-        st.success("✅ Đã trích xuất dữ liệu từ ảnh QR. Bạn có thể sửa lại bên dưới.")
-    else:
-        st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên. Vui lòng thử lại với ảnh khác.")
-
-# Các ô nhập liệu luôn ghi nhận giá trị mới để tạo QR đúng
+# Hiển thị form để nhập hoặc sửa dữ liệu
 account = st.text_input("🔢 Số tài khoản", value=st.session_state["account"])
 bank_bin = st.text_input("🏦 Mã ngân hàng (BIN)", value=st.session_state["bank_bin"])
 name = st.text_input("👤 Tên tài khoản (tùy chọn)", value=st.session_state["name"])
@@ -243,13 +239,16 @@ if st.button("🎉 Tạo mã QR"):
     if not st.session_state.get("account", ""):
         st.warning("❗ Vui lòng nhập đầy đủ thông tin số tài khoản.")
     else:
-        qr_data = build_vietqr_payload(merchant_id.strip(), bank_bin.strip(), add_info.strip(), amount.strip())
-        qr1 = generate_qr_with_logo(qr_data)
-        qr2 = create_qr_with_text(qr_data, st.session_state['name'], st.session_state['account'])
-        qr3 = create_qr_with_background(qr_data, st.session_state['name'], st.session_state['account'])
-        st.subheader("📌 Mẫu 1: QR Rút gọn")
-        st.image(qr1, caption="QR VietQR chuẩn")
-        st.subheader("🧾 Mẫu 2: QR CÓ THÔNG TIN")
-        st.image(qr2, caption="QR kèm tên và định danh")
-        st.subheader("🌅 Mẫu 3: QR MÈO THẦN TÀI")
-        st.image(qr3, caption="QR nền tùy chỉnh")
+        qr_data = build_vietqr_payload(
+        account.strip(),
+        bank_bin.strip(),
+        note.strip(),
+        amount.strip()
+    )
+    qr1 = generate_qr_with_logo(qr_data)
+    qr2 = create_qr_with_text(qr_data, name, account)
+    qr3 = create_qr_with_background(qr_data, name, account)
+
+    # ✅ Sau khi tạo xong → clear form và ảnh
+    for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
+        st.session_state[key] = ""
