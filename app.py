@@ -188,7 +188,7 @@ st.markdown(
 
 st.header("📥 Nhập tay hoặc phân tích từ ảnh QR")
 
-for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
+for field in ["account", "name", "note", "amount", "uploaded_file"]:
     if field not in st.session_state:
         st.session_state[field] = ""
 
@@ -219,7 +219,7 @@ note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""))
 
 if st.button("🎉 Tạo mã QR"):
-    if not all([account.strip(), bank_bin.strip()]):
+    if not all([account.strip()]):
         st.warning("⚠️ Vui lòng nhập số tài khoản và mã ngân hàng.")
     else:
         qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
@@ -274,52 +274,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-st.header("📥 Nhập tay hoặc phân tích từ ảnh QR")
-
-for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
-    if field not in st.session_state:
-        st.session_state[field] = ""
-
-uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="file_upload")
-if uploaded_file and uploaded_file != st.session_state["uploaded_file"]:
-    st.session_state["uploaded_file"] = uploaded_file
-    qr_text = decode_qr_image_cv(uploaded_file)
-    if qr_text:
-        info = extract_vietqr_info(qr_text)
-        st.session_state["account"] = info.get("account", "")
-        st.session_state["bank_bin"] = info.get("bank_bin", "970418")
-        st.session_state["note"] = info.get("note", "")
-        st.session_state["amount"] = info.get("amount", "")
-        st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
-    else:
-        st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
-
-account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""))
-bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", ""))
-name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""))
-note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""))
-amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""))
-
-if st.button("🎉 Tạo mã QR"):
-    if not all([account.strip(), bank_bin.strip()]):
-        st.warning("⚠️ Vui lòng nhập số tài khoản và mã ngân hàng.")
-    else:
-        qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
-        st.session_state["qr1"] = generate_qr_with_logo(qr_data)
-        st.session_state["qr2"] = create_qr_with_text(qr_data, name.strip(), account.strip())
-        st.session_state["qr3"] = create_qr_with_background(qr_data, name.strip(), account.strip())
-
-        # Reset form
-        st.session_state["account"] = ""
-        st.session_state["bank_bin"] = ""
-        st.session_state["name"] = ""
-        st.session_state["note"] = ""
-        st.session_state["amount"] = ""
-        st.session_state["uploaded_file"] = None
-
-        # Rerun để form hiển thị rỗng
-        st.experimental_rerun()
 
 # Hiển thị ảnh QR nếu có
 if "qr1" in st.session_state:
