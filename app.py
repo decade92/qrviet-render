@@ -226,13 +226,20 @@ if st.button("🎉 Tạo mã QR"):
         qr1 = generate_qr_with_logo(qr_data)
         qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
         qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
+
+        # Lưu ảnh QR vào session để hiển thị sau rerun
         st.session_state["qr1"] = qr1
         st.session_state["qr2"] = qr2
         st.session_state["qr3"] = qr3
-        st.success("✅ Mã QR đã được tạo thành công.")
-        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
+
+        # Xóa form và input
+        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file', 'last_file_uploaded']:
             if key in st.session_state:
                 del st.session_state[key]
+
+        # Rerun để xóa dữ liệu hiển thị trong form
+        st.experimental_rerun()
+
 
 if "qr1" in st.session_state:
     st.markdown("### 🏷️ Mẫu 1: QR có logo BIDV")
