@@ -236,11 +236,11 @@ if uploaded_file:
             st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
 
 # Hiển thị form để nhập hoặc sửa dữ liệu
-account = st.text_input("🔢 Số tài khoản", value=st.session_state["account"])
-bank_bin = st.text_input("🏦 Mã ngân hàng (BIN)", value=st.session_state["bank_bin"])
-name = st.text_input("👤 Tên tài khoản (tùy chọn)", value=st.session_state["name"])
-note = st.text_input("📝 Nội dung chuyển khoản", value=st.session_state["note"])
-amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state["amount"])
+account = st.text_input("🔢 Số tài khoản", key="account")
+bank_bin = st.text_input("🏦 Mã ngân hàng", key="bank_bin")
+name = st.text_input("👤 Tên tài khoản (nếu có)", key="name")
+note = st.text_input("📝 Nội dung (nếu có)", key="note")
+amount = st.text_input("💵 Số tiền (nếu có)", key="amount")
 
 if st.button("🎉 Tạo mã QR"):
     if not all([account.strip(), bank_bin.strip()]):
@@ -282,7 +282,3 @@ if "qr2" in st.session_state:
 if "qr3" in st.session_state:
     st.markdown("### 🐈‍⬛ Mẫu 3: QR nền mèo thần tài (may mắn)")
     st.image(st.session_state["qr3"], caption="Mẫu QR nền đẹp", use_container_width=True)
-    
-else:
-    st.warning('⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.')
-
