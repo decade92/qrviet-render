@@ -153,6 +153,7 @@ with col2:
         for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file", "qr1", "qr2", "qr3", "last_file_uploaded"]:
             if key in st.session_state:
                 del st.session_state[key]
+        st.session_state["bank_bin"] = "970418"  # đảm bảo reset về mặc định
         st.experimental_rerun()
 
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
