@@ -161,14 +161,6 @@ if "qr1" not in st.session_state:
     st.session_state.qr1 = None
     st.session_state.qr2 = None
     st.session_state.qr3 = None
-font_css = f"""
-<style>
-@font-face {{
-    font-family: 'RobotoCustom';
-    src: url(data:font/ttf;base64,{base64.b64encode(open(FONT_PATH, "rb").read()).decode()}) format('truetype');
-}}
-</style>
-"""
 
 st.markdown(font_css, unsafe_allow_html=True)
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS")
