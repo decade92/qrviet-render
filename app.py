@@ -268,3 +268,4 @@ for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
     if key in st.session_state:
         del st.session_state[key]
 st.experimental_rerun()
+st.stop()
