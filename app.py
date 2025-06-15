@@ -146,7 +146,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-    st.markdown("**📥 Nhập thông tin chuyển khoản**")
+st.markdown("**📥 Nhập thông tin chuyển khoản**")
 
 
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
