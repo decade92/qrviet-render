@@ -246,26 +246,29 @@ if st.button("🎉 Tạo mã QR"):
     if not all([account.strip(), bank_bin.strip()]):
         st.warning("⚠️ Vui lòng nhập số tài khoản và mã ngân hàng.")
     else:
+        # ✅ Tạo dữ liệu QR
         qr_data = build_vietqr_payload(
             account.strip(),
             bank_bin.strip(),
             note.strip(),
             amount.strip()
         )
+        # ✅ Tạo ảnh QR
         qr1 = generate_qr_with_logo(qr_data)
         qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
         qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
 
-        # ✅ Lưu QR vào session để giữ lại sau rerun
+        # ✅ Lưu ảnh vào session để hiển thị sau
         st.session_state["qr1"] = qr1
         st.session_state["qr2"] = qr2
         st.session_state["qr3"] = qr3
 
+        # ✅ Hiển thị thành công
         st.success("✅ Mã QR đã được tạo thành công.")
 
-        # ✅ Xóa form và tự động reload
-        st.session_state.clear()
-        st.rerun()
+        # ✅ Sau khi ảnh đã tạo và lưu xong → reset form
+        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
+            st.session_state[key] = ""
 
 # ✅ Hiển thị lại QR nếu có
 if "qr1" in st.session_state:
