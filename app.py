@@ -192,7 +192,7 @@ for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
     if field not in st.session_state:
         st.session_state[field] = ""
 
-uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="file_upload")
 if uploaded_file and uploaded_file != st.session_state["uploaded_file"]:
     st.session_state["uploaded_file"] = uploaded_file
     qr_text = decode_qr_image_cv(uploaded_file)
@@ -275,7 +275,7 @@ for field in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
     if field not in st.session_state:
         st.session_state[field] = ""
 
-uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="file_upload")
 if uploaded_file and uploaded_file != st.session_state["uploaded_file"]:
     st.session_state["uploaded_file"] = uploaded_file
     qr_text = decode_qr_image_cv(uploaded_file)
