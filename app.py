@@ -135,6 +135,30 @@ def create_qr_with_text(data, acc_name, merchant_id):
     buf.seek(0)
     return buf
 
+def create_qr_with_background(data, acc_name, merchant_id):
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
+    qr.add_data(data)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((540, 540))
+    qr_img = round_corners(qr_img, radius=40)
+    logo = Image.open(LOGO_PATH).convert("RGBA").resize((240, 80))
+    qr_img.paste(logo, ((qr_img.width - logo.width) // 2, (qr_img.height - logo.height) // 2), mask=logo)
+    base = Image.open(BG_PATH).convert("RGBA")
+    base.paste(qr_img, (460, 936), mask=qr_img)
+    draw = ImageDraw.Draw(base)
+    font2 = ImageFont.truetype(FONT_PATH, 60)
+    def center_x(text, font):
+        bbox = draw.textbbox((0, 0), text, font=font)
+        return (base.width - (bbox[2] - bbox[0])) // 2
+    draw.text((center_x(acc_name.upper(), font2), 1665), acc_name.upper(), fill=(0, 102, 102), font=font2)
+    draw.text((center_x(merchant_id, font2), 1815), merchant_id, fill=(0, 102, 102), font=font2)
+    buf = BytesIO()
+    base.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
+# ==== Giao diện và xử lý người dùng ====
 font_css = f"""
 <style>
 @font-face {{
