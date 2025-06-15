@@ -249,12 +249,14 @@ if st.button("🎉 Tạo mã QR"):
         qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
         qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
         st.success('✅ Mã QR đã được tạo thành công.')
-        st.markdown("### 🖼️ Mẫu 1: QR có logo BIDV")
-        st.image(qr1, caption='Mẫu QR có logo', use_column_width=True)
-        st.markdown("### 🖼️ Mẫu 2: QR kèm chữ (tên và tài khoản)")
-        st.image(qr2, caption='Mẫu QR có chữ', use_column_width=True)
-        st.markdown("### 🖼️ Mẫu 3: QR nền đẹp có tên và logo")
-        st.image(qr3, caption='Mẫu QR nền đẹp', use_column_width=True)
+        st.markdown("### 🏷️ Mẫu 1: QR có logo BIDV")
+        st.image(qr1, caption="Mẫu QR có logo", use_container_width=True)
+
+        st.markdown("### 🧾 Mẫu 2: QR có chữ (tên và số tài khoản)")
+        st.image(qr2, caption="Mẫu QR có chữ", use_container_width=True)
+
+        st.markdown("### 🐈‍⬛ Mẫu 3: QR nền mèo thần tài (may mắn)")
+        st.image(qr3, caption="Mẫu QR nền đẹp", use_container_width=True)
         time.sleep(1)  # Cho phép hiển thị ảnh QR trước khi reset
         for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
             st.session_state[key] = ''
@@ -262,5 +264,7 @@ if st.button("🎉 Tạo mã QR"):
         st.warning('⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.')
 
     # ✅ Sau khi tạo xong → clear form và ảnh
-    for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
-        st.session_state[key] = ""
+for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
+    if key in st.session_state:
+        del st.session_state[key]
+st.experimental_rerun()
