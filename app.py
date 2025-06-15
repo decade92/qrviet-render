@@ -278,7 +278,7 @@ if "qr2" in st.session_state:
 if "qr3" in st.session_state:
     st.markdown("### 🐈‍⬛ Mẫu 3: QR nền mèo thần tài (may mắn)")
     st.image(st.session_state["qr3"], caption="Mẫu QR nền đẹp", use_container_width=True)
-
-    else:
-        st.warning('⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.')
+    
+else:
+    st.warning('⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.')
 
