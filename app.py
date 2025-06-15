@@ -243,7 +243,9 @@ note = st.text_input("📝 Nội dung chuyển khoản", value=st.session_state[
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state["amount"])
 
 if st.button("🎉 Tạo mã QR"):
-    if all([account.strip(), bank_bin.strip()]):
+    if not all([account.strip(), bank_bin.strip()]):
+        st.warning("⚠️ Vui lòng nhập số tài khoản và mã ngân hàng.")
+    else:
         qr_data = build_vietqr_payload(
             account.strip(),
             bank_bin.strip(),
@@ -254,18 +256,17 @@ if st.button("🎉 Tạo mã QR"):
         qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
         qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
 
-        # ✅ Lưu ảnh QR lại để hiển thị
+        # ✅ Lưu QR vào session để giữ lại sau rerun
         st.session_state["qr1"] = qr1
         st.session_state["qr2"] = qr2
         st.session_state["qr3"] = qr3
 
-        # ✅ Reset các ô nhập liệu (không reset ảnh QR)
-        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
-            st.session_state[key] = ''
-        
         st.success("✅ Mã QR đã được tạo thành công.")
-    else:
-        st.warning("⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.")
+
+        # ✅ Xóa form và tự động reload
+        st.session_state.clear()
+        st.rerun()
+
 # ✅ Hiển thị lại QR nếu có
 if "qr1" in st.session_state:
     st.markdown("### 🏷️ Mẫu 1: QR có logo BIDV")
