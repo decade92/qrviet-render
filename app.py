@@ -230,10 +230,9 @@ if st.button("🎉 Tạo mã QR"):
         st.session_state["qr2"] = qr2
         st.session_state["qr3"] = qr3
         st.success("✅ Mã QR đã được tạo thành công.")
-        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
+        for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file", "last_file_uploaded"]:
             if key in st.session_state:
                 del st.session_state[key]
-            st.experimental_rerun()
 
         account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""))
         bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", "970418"))
