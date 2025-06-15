@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
-LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo_bidv.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 
@@ -170,15 +170,11 @@ st.markdown(font_css, unsafe_allow_html=True)
 # Giao diện người dùng
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS ")
 
-with open("assets/logo_bidv.png", "rb") as f:
-    logo_data = base64.b64encode(f.read()).decode()
-
-# Hiển thị tiêu đề với logo
 st.markdown(
     f"""
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <img src="data:image/png;base64,{logo_data}" style="height:30px; width:auto;">
-        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:24px; color:#007C71;">
+    <div style="display: flex; align-items: center;">
+        <img src="data:image/png;base64,{base64.b64encode(open(LOGO_PATH, "rb").read()).decode()}" style="max-height:25px; height:25px; width:auto; margin-right:10px;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:25px; color:#007C71;">
             Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
         </span>
     </div>
@@ -204,15 +200,13 @@ add_info = ""
 amount = ""
 
 
-# === FORM NHẬP DỮ LIỆU ===
-
+# === KHỞI TẠO STATE ===
 for key in ["account", "bank_bin", "name", "note", "amount"]:
     if key not in st.session_state:
         st.session_state[key] = ""
 
 uploaded_file = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"])
 
-# ✅ Chỉ decode 1 lần duy nhất
 if uploaded_file and "qr_extracted" not in st.session_state:
     qr_text = decode_qr_image_cv(uploaded_file)
     if qr_text:
@@ -224,11 +218,12 @@ if uploaded_file and "qr_extracted" not in st.session_state:
         st.session_state["qr_extracted"] = True
         st.success("✅ Đã lấy dữ liệu từ ảnh QR. Bạn có thể sửa lại bên dưới nếu muốn.")
 
-st.text_input("🔢 Số tài khoản", key="account")
-st.text_input("🏦 Mã ngân hàng (BIN)", key="bank_bin")
-st.text_input("👤 Tên tài khoản (tùy chọn)", key="name")
-st.text_input("📝 Nội dung chuyển khoản (tùy chọn)", key="note")
-st.text_input("💵 Số tiền (nếu có)", key="amount")
+# === NHẬP FORM VỚI STATE CẬP NHẬT ===
+st.session_state["account"] = st.text_input("🔢 Số tài khoản", value=st.session_state["account"])
+st.session_state["bank_bin"] = st.text_input("🏦 Mã ngân hàng (BIN)", value=st.session_state["bank_bin"])
+st.session_state["name"] = st.text_input("👤 Tên tài khoản (tùy chọn)", value=st.session_state["name"])
+st.session_state["note"] = st.text_input("📝 Nội dung chuyển khoản", value=st.session_state["note"])
+st.session_state["amount"] = st.text_input("💵 Số tiền (nếu có)", value=st.session_state["amount"])
 
 if st.button("🎉 Tạo mã QR"):
     if not st.session_state.get("account", ""):
