@@ -2,7 +2,7 @@
 import streamlit as st
 st.set_page_config(
     page_title="VietQR BIDV",
-    page_icon="assets/bidvfa.png",
+    page_icon="assets/logo_bidv.png",
     layout="centered"
 )
 
@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
-LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo_bidv.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 
@@ -170,23 +170,17 @@ st.markdown(font_css, unsafe_allow_html=True)
 # Giao diện người dùng
 st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS ")
 
-# Đọc ảnh logo BIDV
-with open("assets/logo_bidv.png", "rb") as f:
-    logo_data = base64.b64encode(f.read()).decode()
-
-# Hiển thị tiêu đề với logo
 st.markdown(
     f"""
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <img src="data:image/png;base64,{logo_data}" style="height:30px; width:auto;">
-        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:24px; color:#007C71;">
+    <div style="display: flex; align-items: center;">
+        <img src="data:image/png;base64,{base64.b64encode(open(LOGO_PATH, "rb").read()).decode()}" style="max-height:25px; height:25px; width:auto; margin-right:10px;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:25px; color:#007C71;">
             Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
         </span>
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 
 # === FORM NHẬP DỮ LIỆU ===
@@ -242,18 +236,16 @@ note = st.text_input("📝 Nội dung chuyển khoản", value=st.session_state[
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state["amount"])
 
 if st.button("🎉 Tạo mã QR"):
-    if not st.session_state.get("account", ""):
-        st.warning("❗ Vui lòng nhập đầy đủ thông tin số tài khoản.")
+    if all([account.strip(), bank_bin.strip()]):
+        qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
+        qr1 = generate_qr_with_logo(qr_data)
+        qr2 = create_qr_with_text(qr_data, name.strip(), account.strip())
+        qr3 = create_qr_with_background(qr_data, name.strip(), account.strip())
+        st.success('✅ Mã QR đã được tạo thành công.')
+        for key in ['account', 'bank_bin', 'name', 'note', 'amount', 'uploaded_file']:
+            st.session_state[key] = ''
     else:
-        qr_data = build_vietqr_payload(
-        account.strip(),
-        bank_bin.strip(),
-        note.strip(),
-        amount.strip()
-    )
-    qr1 = generate_qr_with_logo(qr_data)
-    qr2 = create_qr_with_text(qr_data, name, account)
-    qr3 = create_qr_with_background(qr_data, name, account)
+        st.warning('⚠️ Vui lòng nhập ít nhất số tài khoản và mã ngân hàng.')
 
     # ✅ Sau khi tạo xong → clear form và ảnh
     for key in ["account", "bank_bin", "name", "note", "amount", "uploaded_file"]:
