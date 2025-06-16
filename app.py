@@ -9,6 +9,7 @@ ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
+BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
 
 # ======== QR Logic Functions ========
 def format_tlv(tag, value): return f"{tag}{len(value):02d}{value}"
@@ -117,6 +118,22 @@ def create_qr_with_background(data, acc_name, merchant_id):
     draw.text((cx(merchant_id), 1815), merchant_id, fill=(0, 102, 102), font=font)
     buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
+def create_qr_with_background_thantai(data, acc_name, merchant_id):
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=0)
+    qr.add_data(data)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((480, 520))
+    logo = Image.open(LOGO_PATH).convert("RGBA").resize((240, 80))
+    qr_img.paste(logo, ((qr_img.width - logo.width) // 2, (qr_img.height - logo.height) // 2), logo)
+    base = Image.open(BG_THAI_PATH).convert("RGBA")
+    base.paste(qr_img, (793, 725), qr_img)
+    draw = ImageDraw.Draw(base)
+    font = ImageFont.truetype(FONT_PATH, 60)
+    cx = lambda t: (base.width - draw.textbbox((0, 0), t, font=font)[2]) // 2
+    draw.text((cx(acc_name.upper()), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
+    draw.text((cx(merchant_id), 1815), merchant_id, fill=(0, 102, 102), font=font)
+    buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
+    return buf
 
 # ==== Giao diện người dùng ====
 if os.path.exists(FONT_PATH):
@@ -177,6 +194,7 @@ if st.button("🎉 Tạo mã QR"):
         st.session_state["qr1"] = generate_qr_with_logo(qr_data)
         st.session_state["qr2"] = create_qr_with_text(qr_data, name.strip(), account.strip())
         st.session_state["qr3"] = create_qr_with_background(qr_data, name.strip(), account.strip())
+        st.session_state["qr4"] = create_qr_with_background_thantai(qr_data, name.strip(), account.strip())
         st.success("✅ Mã QR đã được tạo thành công.")
 
 # ==== Hiển thị ảnh QR nếu có ====
@@ -187,5 +205,8 @@ if "qr2" in st.session_state:
     with st.expander("📄 Mẫu 2: QR có chữ"):
         st.image(st.session_state["qr2"], caption="Mẫu QR có chữ", use_container_width=True)
 if "qr3" in st.session_state:
-    with st.expander("🐱 Mẫu 3: QR nền mèo thần tài"):
-        st.image(st.session_state["qr3"], caption="Mẫu QR nền đẹp", use_container_width=True)
+    with st.expander("🐱 Mẫu 3: QR mèo thần tài"):
+        st.image(st.session_state["qr3"], caption="Mẫu QR mèo thần tài", use_container_width=True)
+if "qr4" in st.session_state:
+    with st.expander("🐱 🐯 Mẫu 4: QR thần tài"):
+        st.image(st.session_state["qr4"], caption="Mẫu QR nền thần tài", use_container_width=True)
