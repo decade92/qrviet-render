@@ -185,11 +185,11 @@ if uploaded_result and uploaded_result != st.session_state.get("last_file_upload
         st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
 
 account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""), key="account")
-bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("bank_bin", "970418"), key="bank_bin")
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""), key="name")
+store = st.text_input("🏪 Tên cửa hàng (nếu có)", value=st.session_state.get("store", ""), key="store")
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""), key="note")
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""), key="amount")
-store = st.text_input("🏪 Tên cửa hàng", value=st.session_state.get("store", ""), key="store")
+bank_bin = st.text_input("🏦 Mã ngân hàng (BIDV: 970418)", value=st.session_state.get("bank_bin", "970418"), key="bank_bin")
 
 if st.button("🎉 Tạo mã QR"):
     if not account.strip():
