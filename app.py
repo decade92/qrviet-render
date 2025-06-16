@@ -102,7 +102,7 @@ def create_qr_with_text(data, acc_name, merchant_id):
     buf = io.BytesIO(); canvas.save(buf, format="PNG"); buf.seek(0)
     return buf
 
-def create_qr_with_background(data, acc_name, merchant_id):
+def create_qr_with_background(data, acc_name, merchant_id, store_name):
     qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
     qr.add_data(data); qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((540, 540))
@@ -113,12 +113,15 @@ def create_qr_with_background(data, acc_name, merchant_id):
     base.paste(qr_img, (460, 936), qr_img)
     draw = ImageDraw.Draw(base)
     font = ImageFont.truetype(FONT_PATH, 60)
-    cx = lambda t: (base.width - draw.textbbox((0, 0), t, font=font)[2]) // 2
-    draw.text((cx(acc_name.upper()), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
-    draw.text((cx(merchant_id), 1815), merchant_id, fill=(0, 102, 102), font=font)
+    cx = lambda t, f: (base.width - draw.textbbox((0, 0), t, font=f)[2]) // 2
+    draw.text((cx(acc_name.upper(), font), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
+    draw.text((cx(merchant_id, font), 1815), merchant_id, fill=(0, 102, 102), font=font)
+    store_font = ImageFont.truetype(FONT_PATH, 70)
+    draw.text((cx(store_name.upper(), store_font), 1510), store_name.upper(), fill="#007C71", font=store_font)
     buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
-def create_qr_with_background_thantai(data, acc_name, merchant_id):
+
+def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name):
     qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=0)
     qr.add_data(data)
     qr.make(fit=True)
@@ -129,9 +132,11 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id):
     base.paste(qr_img, (793, 725), qr_img)
     draw = ImageDraw.Draw(base)
     font = ImageFont.truetype(FONT_PATH, 60)
-    cx = lambda t: (base.width - draw.textbbox((0, 0), t, font=font)[2]) // 2
-    draw.text((cx(acc_name.upper()), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
-    draw.text((cx(merchant_id), 1815), merchant_id, fill=(0, 102, 102), font=font)
+    cx = lambda t, f: (base.width - draw.textbbox((0, 0), t, font=f)[2]) // 2
+    draw.text((cx(acc_name.upper(), font), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
+    draw.text((cx(merchant_id, font), 1815), merchant_id, fill=(0, 102, 102), font=font)
+    store_font = ImageFont.truetype(FONT_PATH, 70)
+    draw.text((cx(store_name.upper(), store_font), 1510), store_name.upper(), fill="#007C71", font=store_font)
     buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
 
@@ -165,7 +170,6 @@ st.markdown(
 
 st.markdown("**📥 Nhập thông tin chuyển khoản**")
 
-
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
 if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
     st.session_state["last_file_uploaded"] = uploaded_result
@@ -185,6 +189,7 @@ bank_bin = st.text_input("🏦 Mã ngân hàng", value=st.session_state.get("ban
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""), key="name")
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""), key="note")
 amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""), key="amount")
+store = st.text_input("🏪 Tên cửa hàng", value=st.session_state.get("store", ""), key="store")
 
 if st.button("🎉 Tạo mã QR"):
     if not account.strip():
@@ -193,8 +198,8 @@ if st.button("🎉 Tạo mã QR"):
         qr_data = build_vietqr_payload(account.strip(), bank_bin.strip(), note.strip(), amount.strip())
         st.session_state["qr1"] = generate_qr_with_logo(qr_data)
         st.session_state["qr2"] = create_qr_with_text(qr_data, name.strip(), account.strip())
-        st.session_state["qr3"] = create_qr_with_background(qr_data, name.strip(), account.strip())
-        st.session_state["qr4"] = create_qr_with_background_thantai(qr_data, name.strip(), account.strip())
+        st.session_state["qr3"] = create_qr_with_background(qr_data, name.strip(), account.strip(), store.strip())
+        st.session_state["qr4"] = create_qr_with_background_thantai(qr_data, name.strip(), account.strip(), store.strip())
         st.success("✅ Mã QR đã được tạo thành công.")
 
 # ==== Hiển thị ảnh QR nếu có ====
