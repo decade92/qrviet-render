@@ -117,7 +117,7 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name):
     draw.text((cx(acc_name.upper(), font), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
     draw.text((cx(merchant_id, font), 1815), merchant_id, fill=(0, 102, 102), font=font)
     store_font = ImageFont.truetype(FONT_PATH, 70)
-    draw.text((cx(store_name.upper(), store_font), 1510), store_name.upper(), fill="#007C71", font=store_font)
+    draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
     buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
 
@@ -136,7 +136,7 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name):
     draw.text((cx(acc_name.upper(), font), 1665), acc_name.upper(), fill=(0, 102, 102), font=font)
     draw.text((cx(merchant_id, font), 1815), merchant_id, fill=(0, 102, 102), font=font)
     store_font = ImageFont.truetype(FONT_PATH, 70)
-    draw.text((cx(store_name.upper(), store_font), 1510), store_name.upper(), fill="#007C71", font=store_font)
+    draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
     buf = io.BytesIO(); base.save(buf, format="PNG"); buf.seek(0)
     return buf
 
