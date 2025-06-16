@@ -13,6 +13,8 @@ BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
 
 # ======== QR Logic Functions ========
 def format_tlv(tag, value): return f"{tag}{len(value):02d}{value}"
+def sanitize_input(text):
+    return ''.join(text.split())
 
 def crc16_ccitt(data):
     crc = 0xFFFF
@@ -176,20 +178,32 @@ if uploaded_result and uploaded_result != st.session_state.get("last_file_upload
     qr_text = decode_qr_image_cv(uploaded_result)
     if qr_text:
         info = extract_vietqr_info(qr_text)
-        st.session_state["account"] = info.get("account", "")
-        st.session_state["bank_bin"] = info.get("bank_bin", "970418")
-        st.session_state["note"] = info.get("note", "")
-        st.session_state["amount"] = info.get("amount", "")
-        st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
+        if info.get("bank_bin") != "970418":
+            st.error("⚠️ Ứng dụng chỉ hỗ trợ QR từ BIDV (Mã BIN: 970418).")
+        else:
+            # 🚨 Ghi đè toàn bộ các trường bằng dữ liệu trích xuất từ ảnh QR
+            st.session_state["account"] = info.get("account", "")
+            st.session_state["bank_bin"] = info.get("bank_bin", "970418")
+            st.session_state["note"] = info.get("note", "")
+            st.session_state["amount"] = info.get("amount", "")
+            st.session_state["name"] = info.get("name", "")
+            st.session_state["store"] = info.get("store", "")
+            st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
     else:
         st.warning("⚠️ Không thể nhận diện được mã QR từ ảnh đã tải lên.")
 
+
+# Nhập số tài khoản (giữ nguyên key để Streamlit nhớ giá trị)
 account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("account", ""), key="account")
+
+# Làm sạch dữ liệu: bỏ khoảng trắng dư thừa
+account = ''.join(account.split())
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""), key="name")
 store = st.text_input("🏪 Tên cửa hàng (nếu có)", value=st.session_state.get("store", ""), key="store")
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""), key="note")
-amount = st.text_input("💵 Số tiền (nếu có)", value=st.session_state.get("amount", ""), key="amount")
-bank_bin = st.text_input("🏦 Mã ngân hàng (BIDV: 970418)", value=st.session_state.get("bank_bin", "970418"), key="bank_bin")
+bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
+amount = ''.join(str(st.session_state.get("amount", "")).split())
+merchant_id = ''.join(account.split())  # nếu bạn dùng account làm merchant_id
 
 if st.button("🎉 Tạo mã QR"):
     if not account.strip():
