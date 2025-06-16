@@ -12,6 +12,17 @@ BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
 
 # ======== QR Logic Functions ========
+def clean_amount_input(raw_input):
+    if not raw_input:
+        return ""
+    try:
+        # Xử lý định dạng: "1.000.000,50" => "1000000.50"
+        cleaned = raw_input.replace(".", "").replace(",", ".")
+        value = float(cleaned)
+        return str(int(value))  # Lấy phần nguyên
+    except ValueError:
+        return None
+        
 def format_tlv(tag, value): return f"{tag}{len(value):02d}{value}"
 def sanitize_input(text):
     return ''.join(text.split())
@@ -205,21 +216,14 @@ bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
 amount = ''.join(str(st.session_state.get("amount", "")).split())
 merchant_id = ''.join(account.split())  # nếu bạn dùng account làm merchant_id
 # Xử lý đầu vào số tiền
-amount_input = st.text_input("💰 Số tiền (tuỳ chọn)", key="amount_input")
+amount_input_raw = st.text_input("💰 Số tiền", value=st.session_state.get("amount", ""), key="amount_input")
+amount_cleaned = clean_amount_input(amount_input_raw)
 
-# Kiểm tra và cập nhật session_state nếu hợp lệ
-if amount_input:
-    try:
-        # Chỉ chấp nhận số tiền là số và >= 1
-        amount = float(amount_input.replace(",", "").strip())
-        if amount > 0:
-            st.session_state["amount"] = f"{amount:.0f}"  # Ghi lại số nguyên
-        else:
-            st.warning("⚠️ Số tiền phải lớn hơn 0.")
-    except ValueError:
-        st.warning("⚠️ Vui lòng nhập đúng định dạng số tiền.")
+if amount_input_raw and amount_cleaned is None:
+    st.error("❌ Số tiền không hợp lệ. Vui lòng chỉ nhập số (dùng dấu . hoặc , nếu có).")
 else:
-    st.session_state["amount"] = ""
+    st.session_state["amount"] = amount_cleaned or ""
+
 
 if st.button("🎉 Tạo mã QR"):
     if not account.strip():
