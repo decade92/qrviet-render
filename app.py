@@ -204,17 +204,16 @@ note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("
 bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
 amount = ''.join(str(st.session_state.get("amount", "")).split())
 merchant_id = ''.join(account.split())  # nếu bạn dùng account làm merchant_id
-# Nhập số tiền
-amount_input = st.text_input("💰 Số tiền (VND)", value=st.session_state.get("amount", ""), key="amount")
+# Nhập số tiền từ người dùng (với key cố định)
+raw_amount = st.text_input("💰 Số tiền (VND)", key="amount")
 
-# Làm sạch khoảng trắng
-amount_input = ''.join(amount_input.split())
+# Làm sạch khoảng trắng, ký tự không phải số
+clean_amount = ''.join(raw_amount.split())
 
-# Kiểm tra hợp lệ
-if amount_input and not amount_input.isdigit():
+# Nếu không rỗng và không phải số, báo lỗi
+if clean_amount and not clean_amount.isdigit():
     st.warning("⚠️ Số tiền chỉ được nhập bằng chữ số (không dấu, không ký tự đặc biệt).")
-else:
-    st.session_state["amount"] = amount_input  # Gán lại nếu hợp lệ
+
 if st.button("🎉 Tạo mã QR"):
     if not account.strip():
         st.warning("⚠️ Vui lòng nhập số tài khoản.")
