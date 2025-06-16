@@ -4,7 +4,20 @@ from PIL import Image, ImageDraw, ImageFont
 import io, os, base64, cv2, numpy as np
 
 st.set_page_config(page_title="VietQR BIDV", page_icon="assets/bidvfa.png", layout="centered")
-
+st.markdown(
+    """
+    <style>
+    /* Xoá khoảng trắng trên cùng */
+    .block-container {
+        padding-top: 0rem;
+    }
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
@@ -166,12 +179,24 @@ if os.path.exists(FONT_PATH):
     """
     st.markdown(font_css, unsafe_allow_html=True)
 
-st.title("🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS")
+# Tiêu đề 1: Tên ứng dụng
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; justify-content: left; margin-bottom: 10px;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size: 22px; color: white;">
+            🇻🇳 Tạo ảnh VietQR đẹp chuẩn NAPAS
+        </span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Tiêu đề 2: BIDV Thái Bình + logo
 st.markdown(
     """
     <div style="display: flex; align-items: center;">
-        <img src="data:image/png;base64,{logo_data}" style="max-height:25px; height:25px; width:auto; margin-right:10px;">
-        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:25px; color:#007C71;">
+        <img src="data:image/png;base64,{logo_data}" style="max-height:20px; height:20px; width:auto; margin-right:10px;">
+        <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:20px; color:#007C71;">
             Dành riêng cho BIDV Thái Bình - PGD Tiền Hải
         </span>
     </div>
@@ -181,7 +206,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown("**📥 Nhập thông tin chuyển khoản**")
 
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
 if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
@@ -216,7 +240,7 @@ bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
 amount = ''.join(str(st.session_state.get("amount", "")).split())
 merchant_id = ''.join(account.split())  # nếu bạn dùng account làm merchant_id
 # Xử lý đầu vào số tiền
-amount_input_raw = st.text_input("💰 Số tiền", value=st.session_state.get("amount", ""), key="amount_input")
+amount_input_raw = st.text_input("💰 Số tiền (nếu có)", value=st.session_state.get("amount", ""), key="amount_input")
 amount_cleaned = clean_amount_input(amount_input_raw)
 
 if amount_input_raw and amount_cleaned is None:
