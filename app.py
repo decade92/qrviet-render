@@ -208,5 +208,5 @@ if "qr3" in st.session_state:
     with st.expander("🐱 Mẫu 3: QR mèo thần tài"):
         st.image(st.session_state["qr3"], caption="Mẫu QR mèo thần tài", use_container_width=True)
 if "qr4" in st.session_state:
-    with st.expander("🐱 🐯 Mẫu 4: QR thần tài"):
+    with st.expander("🐯 Mẫu 4: QR thần tài"):
         st.image(st.session_state["qr4"], caption="Mẫu QR nền thần tài", use_container_width=True)
