@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 # Cài thư viện hệ thống cần thiết cho pyzbar, OpenCV
 RUN apt-get update && \
