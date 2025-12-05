@@ -1,5 +1,8 @@
 streamlit
 qrcode
 Pillow
-opencv-python
 numpy
+opencv-python-headless
+requests
+beautifulsoup4
+pyzbar
