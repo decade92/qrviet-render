@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import io, os, base64, cv2, numpy as np
 import requests
 from bs4 import BeautifulSoup
+from pyzbar.pyzbar import decode as pyzbar_decode
 
 st.set_page_config(page_title="VietQR BIDV", page_icon="assets/bidvfa.png", layout="centered")
 st.markdown(
@@ -94,31 +95,35 @@ def extract_vietqr_info(payload):
     return info
 
 def decode_qr_auto(uploaded_image):
-    # Convert to OpenCV image
+    """
+    Thử đọc QR theo thứ tự:
+    1️⃣ OpenCV
+    2️⃣ ZXing web
+    3️⃣ pyzbar (offline)
+    Trả về: data (string) và phương pháp đọc
+    """
     uploaded_image.seek(0)
     file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
-    image_cv2 = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    img_cv2 = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-    # Step 1: OpenCV
+    # ===== 1️⃣ OpenCV =====
     detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(image_cv2)
+    data, _, _ = detector.detectAndDecode(img_cv2)
     if data:
         try:
             if data.startswith("00"):
-                _ = parse_tlv(data)  # Gọi thử để xác thực cấu trúc TLV
+                _ = parse_tlv(data)  # xác thực TLV
                 return data.strip(), "✅ Đọc bằng OpenCV"
         except Exception as e:
-            # Nếu sai TLV, tiếp tục thử ZXing
-            st.info(f"⚠️ OpenCV phát hiện QR nhưng không hợp chuẩn TLV: {e}")
+            st.info(f"⚠️ OpenCV phát hiện QR nhưng sai chuẩn TLV: {e}")
 
-    # Step 2: ZXing fallback
+    # ===== 2️⃣ ZXing Web =====
     try:
         uploaded_image.seek(0)
         img = Image.open(uploaded_image).convert("RGB")
         buffered = io.BytesIO()
         img.save(buffered, format="JPEG")
         img_bytes = buffered.getvalue()
-
         files = {'f': ('qr.jpg', img_bytes, 'image/jpeg')}
         response = requests.post("https://zxing.org/w/decode", files=files)
 
@@ -129,14 +134,32 @@ def decode_qr_auto(uploaded_image):
                 zxing_data = result_tag.text.strip()
                 try:
                     if zxing_data.startswith("00"):
-                        _ = parse_tlv(zxing_data)  # Xác thực TLV
+                        _ = parse_tlv(zxing_data)
                         return zxing_data, "✅ Đọc bằng ZXing"
                 except Exception as e:
-                    return None, f"❌ ZXing đọc nhưng sai chuẩn TLV: {e}"
+                    st.info(f"⚠️ ZXing đọc QR nhưng sai chuẩn TLV: {e}")
     except Exception as e:
-        return None, f"❌ ZXing lỗi: {e}"
+        st.warning(f"❌ ZXing lỗi: {e}")
 
-    return None, "❌ Không thể đọc QR bằng OpenCV hoặc ZXing. QR được giải mã nhưng không đúng chuẩn VietQR"
+    # ===== 3️⃣ pyzbar =====
+    try:
+        uploaded_image.seek(0)
+        img_pil = Image.open(uploaded_image).convert("L")  # grayscale
+        results = pyzbar_decode(img_pil)
+        if results:
+            pyzbar_data = results[0].data.decode("utf-8")
+            try:
+                if pyzbar_data.startswith("00"):
+                    _ = parse_tlv(pyzbar_data)
+                    return pyzbar_data, "✅ Đọc bằng pyzbar"
+            except Exception as e:
+                st.info(f"⚠️ pyzbar đọc QR nhưng sai chuẩn TLV: {e}")
+        else:
+            st.warning("❌ pyzbar không đọc được QR")
+    except Exception as e:
+        st.warning(f"❌ pyzbar lỗi: {e}")
+
+    return None, "❌ Không thể đọc QR bằng OpenCV, ZXing hoặc pyzbar. QR được giải mã nhưng không đúng chuẩn VietQR"
     
 def round_corners(image, radius):
     rounded = Image.new("RGBA", image.size, (0, 0, 0, 0))
