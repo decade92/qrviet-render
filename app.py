@@ -1,5 +1,6 @@
 import streamlit as st
 import qrcode
+import zxingcpp
 from PIL import Image, ImageDraw, ImageFont
 import io, os, base64, cv2, numpy as np
 import requests
