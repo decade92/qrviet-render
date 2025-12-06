@@ -675,7 +675,6 @@ if uploaded_result and uploaded_result != st.session_state.get("last_file_upload
 
     if qr_text:
         st.success(f"🔍 Đã giải mã bằng: **{method}**")
-        st.code(qr_text)
     else:
         st.error("❌ Không thể giải mã mã QR.")
         st.stop()
