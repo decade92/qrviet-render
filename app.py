@@ -485,7 +485,8 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     base.save(buf, format="PNG")
     buf.seek(0)
     return buf
-def create_qr_with_background_loa(data, acc_name, merchant_id, store_name="", support_name="", support_phone=""):
+def create_qr_with_background_loa(data, acc_name, merchant_id, store_name="",
+                                  staff_name="", staff_phone=""):
     # ===== Tạo QR =====
     qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=0)
     qr.add_data(data)
@@ -551,17 +552,17 @@ def create_qr_with_background_loa(data, acc_name, merchant_id, store_name="", su
         draw.text((x_merchant, y_offset), merchant_id, fill=(0,102,102), font=font_merchant)
         y_offset += merchant_font_size + 20
 
-    # ===== Vẽ thông tin cán bộ hỗ trợ (giữ nguyên tọa độ) =====
-    support_name_x, support_name_y = 500, 1138
-    support_phone_x, support_phone_y = 570, 1175
+    # ===== Vẽ thông tin cán bộ hỗ trợ (giữ nguyên tọa độ) với biến mới =====
+    staff_name_x, staff_name_y = 500, 1138
+    staff_phone_x, staff_phone_y = 570, 1175
 
-    if support_name.strip():  # an toàn với string rỗng
-        font_support_name = ImageFont.truetype(FONT_LABELPATH, 32)
-        draw.text((support_name_x, support_name_y), support_name, fill=(0,102,102), font=font_support_name)
+    if staff_name.strip():  # an toàn với string rỗng
+        font_staff_name = ImageFont.truetype(FONT_LABELPATH, 32)
+        draw.text((staff_name_x, staff_name_y), staff_name, fill=(0,102,102), font=font_staff_name)
 
-    if support_phone.strip():
-        font_support_phone = ImageFont.truetype(FONT_LABELPATH, 32)
-        draw.text((support_phone_x, support_phone_y), support_phone, fill=(0,102,102), font=font_support_phone)
+    if staff_phone.strip():
+        font_staff_phone = ImageFont.truetype(FONT_LABELPATH, 32)
+        draw.text((staff_phone_x, staff_phone_y), staff_phone, fill=(0,102,102), font=font_staff_phone)
 
     # ===== Luôn return buffer =====
     buf = io.BytesIO()
