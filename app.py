@@ -716,10 +716,20 @@ st.markdown(
 
 
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
-if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
-    st.session_state["last_file_uploaded"] = uploaded_result
-    qr_text, method = decode_qr_auto(uploaded_result)
-    st.write(method)
+if uploaded_result:
+    # Chỉ xử lý nếu file mới khác file trước đó
+    last_uploaded = st.session_state.get("last_file_uploaded")
+    if uploaded_result != last_uploaded:
+        st.session_state["last_file_uploaded"] = uploaded_result
+
+        # Đọc ảnh từ file và chuyển sang grayscale
+        file_bytes = np.asarray(bytearray(uploaded_result.read()), dtype=np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Gọi decode QR offline (OpenCV -> ZXing offline -> Pyzbar)
+        qr_text, method = decode_qr_auto(gray_img)
+        st.write(method)
     if qr_text:
         try:
             info = extract_vietqr_info(qr_text)
