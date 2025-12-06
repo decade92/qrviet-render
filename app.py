@@ -653,7 +653,7 @@ st.markdown(
     <div style="display: flex; align-items: center;">
         <img src="data:image/png;base64,{logo_data}" style="max-height:20px; height:20px; width:auto; margin-right:10px;">
         <span style="font-family: Roboto, sans-serif; font-weight: bold; font-size:20px; color:#007C71;">
-            Dành riêng cho BIDV Thái Bình
+            Bản Update Test
         </span>
     </div>
     """.format(
