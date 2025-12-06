@@ -124,20 +124,23 @@ def preprocess_image(uploaded_image):
     gray = cv2.equalizeHist(gray)
     return gray
 
-def decode_opencv(img_gray):
+# ==== Decode OpenCV (không tiền xử lý) ====
+def decode_opencv(img):
     detector = cv2.QRCodeDetector()
-    data, points, _ = detector.detectAndDecode(img_gray)
+    data, _, _ = detector.detectAndDecode(img)
     if data:
         return data.strip()
     return None
 
-def decode_pybar(img_gray):
-    pil_img = Image.fromarray(img_gray)
+# ==== Decode Pyzbar (không tiền xử lý) ====
+def decode_pybar(img):
+    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     results = pyzbar_decode(pil_img)
     if results:
         return results[0].data.decode("utf-8")
     return None
 
+# ==== Decode ZXing offline ====
 def decode_zxing_offline(uploaded_image, jar_path=ZXING_JAR_PATH):
     uploaded_image.seek(0)
     img_bytes = uploaded_image.read()
@@ -153,40 +156,45 @@ def decode_zxing_offline(uploaded_image, jar_path=ZXING_JAR_PATH):
             for line in result.stdout.splitlines():
                 if line.startswith("Raw result:"):
                     return line.split("Raw result:")[-1].strip()
-        except Exception as e:
+        except Exception:
             return None
     return None
 
+# ==== Kiểm tra TLV VietQR ====
+def is_valid_tlv(data):
+    try:
+        from app import parse_tlv  # hoặc import từ file của bạn
+        parse_tlv(data)
+        return True
+    except Exception:
+        return False
+
+# ==== Hàm decode QR offline chính (fallback) ====
 def decode_qr_auto(uploaded_image):
     """
-    Fallback đọc QR offline: OpenCV -> ZXing offline -> Pyzbar
+    Fallback offline: OpenCV -> ZXing offline -> Pyzbar
+    Không tiền xử lý ảnh, giữ nguyên ảnh gốc.
     """
-    img_gray = preprocess_image(uploaded_image)
-    
+    uploaded_image.seek(0)
+    file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
     # 1️⃣ OpenCV
-    data = decode_opencv(img_gray)
-    if data:
+    data = decode_opencv(img)
+    if data and data.startswith("00") and is_valid_tlv(data):
         return data, "✅ OpenCV"
-    
+
     # 2️⃣ ZXing offline
     data = decode_zxing_offline(uploaded_image)
-    if data:
+    if data and data.startswith("00") and is_valid_tlv(data):
         return data, "✅ ZXing Offline"
-    
+
     # 3️⃣ Pyzbar
-    data = decode_pybar(img_gray)
-    if data:
+    data = decode_pybar(img)
+    if data and data.startswith("00") and is_valid_tlv(data):
         return data, "✅ Pyzbar"
-    
+
     return None, "❌ Không đọc được QR"
-    
-def round_corners(image, radius):
-    rounded = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    mask = Image.new("L", image.size, 0)
-    draw = ImageDraw.Draw(mask)
-    draw.rounded_rectangle([0, 0, image.size[0], image.size[1]], radius=radius, fill=255)
-    rounded.paste(image, (0, 0), mask=mask)
-    return rounded
 
 def build_vietqr_payload(merchant_id, bank_bin, add_info, amount=""):
     p = format_tlv
