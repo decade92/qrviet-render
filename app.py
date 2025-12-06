@@ -1,4 +1,3 @@
-from pyzbar.pyzbar import decode as pyzbar_decode, ZBarSymbol
 import streamlit as st
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
@@ -30,8 +29,6 @@ BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
 BG_LOA_PATH = os.path.join(ASSETS_DIR, "backgroundloa.png")
 BG_TINGBOX_PATH = os.path.join(ASSETS_DIR, "tingbox.png")
-ZXING_JAR_PATH = "assets/zxing/javase-3.5.0.jar"
-
 
 # ======== QR Logic Functions ========
 def clean_amount_input(raw_input):
@@ -96,122 +93,58 @@ def extract_vietqr_info(payload):
         info["amount"] = parsed["54"]
     return info
 
-def preprocess_image(file_like):
-    """
-    Tiền xử lý ảnh để tăng khả năng đọc QR:
-    - Chuyển sang grayscale
-    - Cân bằng histogram
-    - Lọc nhiễu nhẹ
-    - Adaptive threshold
-    """
-    file_like.seek(0)
-    file_bytes = np.asarray(bytearray(file_like.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.equalizeHist(gray)
-    gray = cv2.GaussianBlur(gray, (3, 3), 0)
-    # Adaptive threshold (tùy chọn nếu QR nhiều nhiễu)
-    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                 cv2.THRESH_BINARY, 11, 2)
-    return gray, img  # gray dùng cho decode, img gốc để fallback ZXing
-def preprocess_image(uploaded_image):
-    """Tiền xử lý ảnh cơ bản để tăng khả năng đọc QR"""
-    uploaded_image.seek(0)
-    file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Làm tăng độ tương phản
-    gray = cv2.equalizeHist(gray)
-    return gray
-
-# ==== Decode OpenCV (không tiền xử lý) ====
-def decode_opencv(img):
-    detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(img)
-    if data:
-        return data.strip()
-    return None
-
-# ==== Decode Pyzbar (không tiền xử lý) ====
-def decode_pybar(img):
-    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    results = pyzbar_decode(pil_img)
-    if results:
-        return results[0].data.decode("utf-8")
-    return None
-
-# ==== Decode ZXing offline ====
-def decode_zxing_offline(uploaded_image, jar_path=ZXING_JAR_PATH):
-    """
-    Gọi ZXing offline qua Java jar, an toàn với lỗi.
-    Trả về None nếu không đọc được.
-    """
-    try:
-        import subprocess, tempfile
-
-        uploaded_image.seek(0)
-        img_bytes = uploaded_image.read()
-
-        with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-            tmp.write(img_bytes)
-            tmp.flush()
-            result = subprocess.run(
-                ["java", "-cp", jar_path, "com.google.zxing.client.j2se.CommandLineRunner", tmp.name],
-                capture_output=True, text=True, timeout=10
-            )
-            for line in result.stdout.splitlines():
-                if line.startswith("Raw result:"):
-                    return line.split("Raw result:")[-1].strip()
-    except Exception as e:
-        # Log lỗi vào console nhưng không crash app
-        print(f"⚠️ ZXing offline error: {e}")
-        return None
-    return None
-
-# ==== Kiểm tra TLV VietQR ====
-def is_valid_tlv(data):
-    try:
-        from app import parse_tlv  # hoặc import từ file của bạn
-        parse_tlv(data)
-        return True
-    except Exception:
-        return False
-
-# ==== Hàm decode QR offline chính (fallback) ====
 def decode_qr_auto(uploaded_image):
-    """
-    Fallback offline: OpenCV -> ZXing offline -> Pyzbar
-    Không tiền xử lý ảnh, giữ nguyên ảnh gốc.
-    """
+    # Convert to OpenCV image
     uploaded_image.seek(0)
     file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    image_cv2 = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-    # 1️⃣ OpenCV
+    # Step 1: OpenCV
+    detector = cv2.QRCodeDetector()
+    data, _, _ = detector.detectAndDecode(image_cv2)
+    if data:
+        try:
+            if data.startswith("00"):
+                _ = parse_tlv(data)  # Gọi thử để xác thực cấu trúc TLV
+                return data.strip(), "✅ Đọc bằng OpenCV"
+        except Exception as e:
+            # Nếu sai TLV, tiếp tục thử ZXing
+            st.info(f"⚠️ OpenCV phát hiện QR nhưng không hợp chuẩn TLV: {e}")
+
+    # Step 2: ZXing fallback
     try:
-        data = decode_opencv(img)
-        if data and data.startswith("00") and is_valid_tlv(data):
-            return data, "✅ OpenCV"
-    except Exception as e:
-        print(f"⚠️ OpenCV decode error: {e}")
+        uploaded_image.seek(0)
+        img = Image.open(uploaded_image).convert("RGB")
+        buffered = io.BytesIO()
+        img.save(buffered, format="JPEG")
+        img_bytes = buffered.getvalue()
 
-    # 2️⃣ ZXing offline
-    try:
-        data = decode_zxing_offline(uploaded_image)
-        if data and data.startswith("00") and is_valid_tlv(data):
-            return data, "✅ ZXing Offline"
-    except Exception as e:
-        print(f"⚠️ ZXing decode error: {e}")
+        files = {'f': ('qr.jpg', img_bytes, 'image/jpeg')}
+        response = requests.post("https://zxing.org/w/decode", files=files)
 
-    # 3️⃣ Pyzbar
-    try:
-        data = decode_pybar(img)
-        if data and data.startswith("00") and is_valid_tlv(data):
-            return data, "✅ Pyzbar"
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            result_tag = soup.find("pre")
+            if result_tag:
+                zxing_data = result_tag.text.strip()
+                try:
+                    if zxing_data.startswith("00"):
+                        _ = parse_tlv(zxing_data)  # Xác thực TLV
+                        return zxing_data, "✅ Đọc bằng ZXing"
+                except Exception as e:
+                    return None, f"❌ ZXing đọc nhưng sai chuẩn TLV: {e}"
     except Exception as e:
-        print(f"⚠️ Pyzbar decode error: {e}")
+        return None, f"❌ ZXing lỗi: {e}"
 
-    return None, "❌ Không đọc được QR"
+    return None, "❌ Không thể đọc QR bằng OpenCV hoặc ZXing. QR được giải mã nhưng không đúng chuẩn VietQR"
+    
+def round_corners(image, radius):
+    rounded = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    mask = Image.new("L", image.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle([0, 0, image.size[0], image.size[1]], radius=radius, fill=255)
+    rounded.paste(image, (0, 0), mask=mask)
+    return rounded
 
 def build_vietqr_payload(merchant_id, bank_bin, add_info, amount=""):
     p = format_tlv
@@ -716,20 +649,10 @@ st.markdown(
 
 
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
-if uploaded_result:
-    # Chỉ xử lý nếu file mới khác file trước đó
-    last_uploaded = st.session_state.get("last_file_uploaded")
-    if uploaded_result != last_uploaded:
-        st.session_state["last_file_uploaded"] = uploaded_result
-
-        # Đọc ảnh từ file và chuyển sang grayscale
-        file_bytes = np.asarray(bytearray(uploaded_result.read()), dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        # Gọi decode QR offline (OpenCV -> ZXing offline -> Pyzbar)
-        qr_text, method = decode_qr_auto(gray_img)
-        st.write(method)
+if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
+    st.session_state["last_file_uploaded"] = uploaded_result
+    qr_text, method = decode_qr_auto(uploaded_result)
+    st.write(method)
     if qr_text:
         try:
             info = extract_vietqr_info(qr_text)
