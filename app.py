@@ -142,13 +142,19 @@ def decode_pybar(img):
 
 # ==== Decode ZXing offline ====
 def decode_zxing_offline(uploaded_image, jar_path=ZXING_JAR_PATH):
-    uploaded_image.seek(0)
-    img_bytes = uploaded_image.read()
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-        tmp.write(img_bytes)
-        tmp.flush()
-        try:
+    """
+    Gọi ZXing offline qua Java jar, an toàn với lỗi.
+    Trả về None nếu không đọc được.
+    """
+    try:
+        import subprocess, tempfile
+
+        uploaded_image.seek(0)
+        img_bytes = uploaded_image.read()
+
+        with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
+            tmp.write(img_bytes)
+            tmp.flush()
             result = subprocess.run(
                 ["java", "-cp", jar_path, "com.google.zxing.client.j2se.CommandLineRunner", tmp.name],
                 capture_output=True, text=True, timeout=10
@@ -156,8 +162,10 @@ def decode_zxing_offline(uploaded_image, jar_path=ZXING_JAR_PATH):
             for line in result.stdout.splitlines():
                 if line.startswith("Raw result:"):
                     return line.split("Raw result:")[-1].strip()
-        except Exception:
-            return None
+    except Exception as e:
+        # Log lỗi vào console nhưng không crash app
+        print(f"⚠️ ZXing offline error: {e}")
+        return None
     return None
 
 # ==== Kiểm tra TLV VietQR ====
@@ -180,19 +188,28 @@ def decode_qr_auto(uploaded_image):
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     # 1️⃣ OpenCV
-    data = decode_opencv(img)
-    if data and data.startswith("00") and is_valid_tlv(data):
-        return data, "✅ OpenCV"
+    try:
+        data = decode_opencv(img)
+        if data and data.startswith("00") and is_valid_tlv(data):
+            return data, "✅ OpenCV"
+    except Exception as e:
+        print(f"⚠️ OpenCV decode error: {e}")
 
     # 2️⃣ ZXing offline
-    data = decode_zxing_offline(uploaded_image)
-    if data and data.startswith("00") and is_valid_tlv(data):
-        return data, "✅ ZXing Offline"
+    try:
+        data = decode_zxing_offline(uploaded_image)
+        if data and data.startswith("00") and is_valid_tlv(data):
+            return data, "✅ ZXing Offline"
+    except Exception as e:
+        print(f"⚠️ ZXing decode error: {e}")
 
     # 3️⃣ Pyzbar
-    data = decode_pybar(img)
-    if data and data.startswith("00") and is_valid_tlv(data):
-        return data, "✅ Pyzbar"
+    try:
+        data = decode_pybar(img)
+        if data and data.startswith("00") and is_valid_tlv(data):
+            return data, "✅ Pyzbar"
+    except Exception as e:
+        print(f"⚠️ Pyzbar decode error: {e}")
 
     return None, "❌ Không đọc được QR"
 
