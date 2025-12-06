@@ -30,6 +30,28 @@ BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
 BG_LOA_PATH = os.path.join(ASSETS_DIR, "backgroundloa.png")
 BG_TINGBOX_PATH = os.path.join(ASSETS_DIR, "tingbox.png")
 
+
+def check_libzbar():
+    try:
+        from pyzbar import pyzbar
+        _ = pyzbar.decode
+        return True
+    except Exception as e:
+        return False, str(e)
+
+status = check_libzbar()
+
+st.sidebar.subheader("🔍 Kiểm tra thư viện QR")
+
+if status is True:
+    st.sidebar.success("✅ libzbar đã được cài & hoạt động")
+else:
+    st.sidebar.error("❌ libzbar chưa hoạt động")
+    st.sidebar.write("Chi tiết lỗi:")
+    st.sidebar.code(status[1])
+
+# ---- YOUR MAIN UI BELOW ----
+st.title("App VietQR BIDV")
 # ======== QR Logic Functions ========
 def clean_amount_input(raw_input):
     if not raw_input:
