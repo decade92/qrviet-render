@@ -93,50 +93,56 @@ def extract_vietqr_info(payload):
         info["amount"] = parsed["54"]
     return info
 
-def decode_qr_auto(uploaded_image):
-    # Convert to OpenCV image
-    uploaded_image.seek(0)
-    file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
-    image_cv2 = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-
-    # Step 1: OpenCV
-    detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(image_cv2)
-    if data:
-        try:
-            if data.startswith("00"):
-                _ = parse_tlv(data)  # Gọi thử để xác thực cấu trúc TLV
-                return data.strip(), "✅ Đọc bằng OpenCV"
-        except Exception as e:
-            # Nếu sai TLV, tiếp tục thử ZXing
-            st.info(f"⚠️ OpenCV phát hiện QR nhưng không hợp chuẩn TLV: {e}")
-
-    # Step 2: ZXing fallback
+def decode_opencv(gray_img):
     try:
-        uploaded_image.seek(0)
-        img = Image.open(uploaded_image).convert("RGB")
-        buffered = io.BytesIO()
-        img.save(buffered, format="JPEG")
-        img_bytes = buffered.getvalue()
+        detector = cv2.QRCodeDetector()
+        data, _, _ = detector.detectAndDecode(gray_img)
+        if data:
+            return data, "OpenCV"
+    except:
+        pass
+    return None, None
 
-        files = {'f': ('qr.jpg', img_bytes, 'image/jpeg')}
-        response = requests.post("https://zxing.org/w/decode", files=files)
 
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            result_tag = soup.find("pre")
-            if result_tag:
-                zxing_data = result_tag.text.strip()
-                try:
-                    if zxing_data.startswith("00"):
-                        _ = parse_tlv(zxing_data)  # Xác thực TLV
-                        return zxing_data, "✅ Đọc bằng ZXing"
-                except Exception as e:
-                    return None, f"❌ ZXing đọc nhưng sai chuẩn TLV: {e}"
-    except Exception as e:
-        return None, f"❌ ZXing lỗi: {e}"
+import zxingcpp
 
-    return None, "❌ Không thể đọc QR bằng OpenCV hoặc ZXing. QR được giải mã nhưng không đúng chuẩn VietQR"
+def decode_zxingcpp(gray_img):
+    try:
+        results = zxingcpp.read_barcodes(gray_img)
+        if results and results[0].text:
+            return results[0].text, "ZXingCPP"
+    except:
+        pass
+    return None, None
+
+
+from pyzbar.pyzbar import decode as pyzbar_decode, ZBarSymbol
+
+def decode_pyzbar(gray_img):
+    try:
+        results = pyzbar_decode(gray_img, symbols=[ZBarSymbol.QRCODE])
+        if results:
+            return results[0].data.decode("utf-8"), "Pyzbar"
+    except:
+        pass
+    return None, None
+def decode_qr_auto(gray_img):
+    # 1) OpenCV
+    text, method = decode_opencv(gray_img)
+    if text:
+        return text, method
+
+    # 2) ZXingCPP
+    text, method = decode_zxingcpp(gray_img)
+    if text:
+        return text, method
+
+    # 3) Pyzbar
+    text, method = decode_pyzbar(gray_img)
+    if text:
+        return text, method
+
+    return None, None
     
 def round_corners(image, radius):
     rounded = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -651,66 +657,85 @@ st.markdown(
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
 if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
     st.session_state["last_file_uploaded"] = uploaded_result
-    qr_text, method = decode_qr_auto(uploaded_result)
-    st.write(method)
-    if qr_text:
-        try:
-            info = extract_vietqr_info(qr_text)
-            bank_bin = info.get("bank_bin", "")
-            bank_map = {
-                            "970418": "BIDV",
-                            "970436": "Vietcombank",
-                            "970415": "VietinBank",
-                            "970405": "Agribank",
-                            "970422": "MB Bank",
-                            "970407": "Techcombank",
-                            "970423": "TPBank",
-                            "970424": "Shinhan Bank",
-                            "970441": "VIB",
-                            "970432": "VPBank",
-                            "970443": "SHB",
-                            "970431": "Eximbank",
-                            "970438": "BaoVietBank",
-                            "970454": "VietCapitalBank",
-                            "970429": "SCB",
-                            "970421": "VRB",
-                            "970425": "ABBank",
-                            "970412": "PVcomBank",
-                            "970414": "OceanBank",
-                            "970428": "NamABank",
-                            "970437": "HDBank",
-                            "970433": "VietBank",
-                            "970459": "ABBANK",
-                            "970448": "OCB",
-                            "970409": "BacABank",
-                            "970442": "Hong Leong Bank VN",
-                            "970430": "PG Bank",
-                            "970446": "Co-op Bank",
-                            "422589": "CIMB VN",
-                            "970434": "Indovina Bank",
-                            "970457": "Woori VN",
-                            "970458": "UOB VN",
-                            "970466": "KEB Hana HCM",
-                            "970467": "KEB Hana HN",
-                            # Tiếp tục bổ sung nếu cần...
-                        }
 
-            if bank_bin != "970418":
-                bank_name = bank_map.get(bank_bin, f"Mã BIN {bank_bin}")
-                st.error(f"""
-                ⚠️ Mã QR này thuộc về: {bank_name}  
-                Ứng dụng chỉ hỗ trợ QR từ BIDV (Mã BIN: 970418)
-                """)
-            else:
-                st.session_state["account"] = info.get("account", "")
-                st.session_state["bank_bin"] = bank_bin
-                st.session_state["note"] = info.get("note", "")
-                st.session_state["amount"] = info.get("amount", "")
-                st.session_state["name"] = info.get("name", "")
-                st.session_state["store"] = info.get("store", "")
-                st.success("✅ Đã trích xuất dữ liệu từ ảnh QR.")
-        except Exception as e:
-            st.warning(f"⚠️ QR được giải mã nhưng không đúng chuẩn VietQR: {e}")
+    # Đọc ảnh → convert sang grayscale để decode
+    image = Image.open(uploaded_result).convert("RGB")
+    gray_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+
+    qr_text, method = decode_qr_auto(gray_img)
+
+    if qr_text:
+        st.success(f"🔍 Đã giải mã bằng: **{method}**")
+        st.code(qr_text)
+    else:
+        st.error("❌ Không thể giải mã mã QR.")
+        st.stop()
+
+    # ======================================================
+    # XỬ LÝ VIETQR
+    # ======================================================
+    try:
+        info = extract_vietqr_info(qr_text)
+
+        bank_bin = info.get("bank_bin", "")
+
+        bank_map = {
+            "970418": "BIDV",
+            "970436": "Vietcombank",
+            "970415": "VietinBank",
+            "970405": "Agribank",
+            "970422": "MB Bank",
+            "970407": "Techcombank",
+            "970423": "TPBank",
+            "970424": "Shinhan Bank",
+            "970441": "VIB",
+            "970432": "VPBank",
+            "970443": "SHB",
+            "970431": "Eximbank",
+            "970438": "BaoVietBank",
+            "970454": "VietCapitalBank",
+            "970429": "SCB",
+            "970421": "VRB",
+            "970425": "ABBank",
+            "970412": "PVcomBank",
+            "970414": "OceanBank",
+            "970428": "NamABank",
+            "970437": "HDBank",
+            "970433": "VietBank",
+            "970459": "ABBANK",
+            "970448": "OCB",
+            "970409": "BacABank",
+            "970442": "Hong Leong Bank VN",
+            "970430": "PG Bank",
+            "970446": "Co-op Bank",
+            "422589": "CIMB VN",
+            "970434": "Indovina Bank",
+            "970457": "Woori VN",
+            "970458": "UOB VN",
+            "970466": "KEB Hana HCM",
+            "970467": "KEB Hana HN",
+        }
+
+        if bank_bin != "970418":
+            bank_name = bank_map.get(bank_bin, f"Mã BIN {bank_bin}")
+            st.error(f"""
+            ⚠️ Mã QR này thuộc ngân hàng: **{bank_name}**  
+            Ứng dụng chỉ hỗ trợ QR thuộc **BIDV – BIN 970418**
+            """)
+            st.stop()
+
+        # Lưu vào session
+        st.session_state["account"] = info.get("account", "")
+        st.session_state["bank_bin"] = bank_bin
+        st.session_state["note"] = info.get("note", "")
+        st.session_state["amount"] = info.get("amount", "")
+        st.session_state["name"] = info.get("name", "")
+        st.session_state["store"] = info.get("store", "")
+
+        st.success("✅ Đã trích xuất dữ liệu từ ảnh QR VietQR (BIDV).")
+
+    except Exception as e:
+        st.warning(f"⚠️ QR decode được nhưng không đúng chuẩn VietQR: {e}")
 
 
 
