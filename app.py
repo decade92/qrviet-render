@@ -689,7 +689,7 @@ st.markdown(
 uploaded_result = st.file_uploader("📤 Tải ảnh QR VietQR", type=["png", "jpg", "jpeg"], key="uploaded_file")
 if uploaded_result and uploaded_result != st.session_state.get("last_file_uploaded"):
     st.session_state["last_file_uploaded"] = uploaded_result
-    qr_text, method = decode_qr_auto(uploaded_result)
+    qr_text, method = decode_qr_auto(uploaded_result, parse_tlv)
     st.write(method)
     if qr_text:
         try:
