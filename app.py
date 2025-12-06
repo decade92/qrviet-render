@@ -6,6 +6,7 @@ from io import BytesIO
 import os
 import base64
 
+
 st.set_page_config(
     page_title="VietQR BIDV",
     page_icon="assets/bidvfa.png",  # hoặc emoji như "🏦"
@@ -16,7 +17,24 @@ LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
 FONT_PATH = os.path.join(ASSETS_DIR, "Roboto-Bold.ttf")
 BG_PATH = os.path.join(ASSETS_DIR, "background.png")
 BG_THAI_PATH = os.path.join(ASSETS_DIR, "backgroundthantai.png")
+def check_libzbar():
+    try:
+        from pyzbar import pyzbar
+        result = pyzbar.decode   # Gọi hàm để chắc chắn import ok
+        return True
+    except Exception as e:
+        return False, str(e)
 
+status = check_libzbar()
+
+st.sidebar.subheader("🔍 Kiểm tra thư viện QR")
+
+if status is True:
+    st.sidebar.success("✅ libzbar đã được cài & hoạt động")
+else:
+    st.sidebar.error("❌ libzbar chưa hoạt động")
+    st.sidebar.write("Chi tiết lỗi:")
+    st.sidebar.code(status[1])
 def format_tlv(tag, value):
     return f"{tag}{len(value):02d}{value}"
 
