@@ -346,8 +346,8 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, staff_nam
     # Trong create_qr_with_background hoặc create_qr_with_background_thantai
     if branch_name and branch_name.strip():
         branch_name_text = "Chi nhánh " + normalize_branch_name(branch_name)
-        font_branch = ImageFont.truetype(FONT_PATH, 50)  # cỡ font tùy chỉnh
-        draw.text((470, 80), branch_name_text, fill="#007C71", font=font_branch)
+        font_branch = ImageFont.truetype(FONT_PATH, 41)  # cỡ font tùy chỉnh
+        draw.text((471, 157), branch_name_text, fill="3C7471", font=font_branch)
 
     # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
@@ -453,8 +453,8 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     # Trong create_qr_with_background hoặc create_qr_with_background_thantai
     if branch_name and branch_name.strip():
         branch_name_text = "Chi nhánh " + normalize_branch_name(branch_name)
-        font_branch = ImageFont.truetype(FONT_PATH, 50)  # cỡ font tùy chỉnh
-        draw.text((470, 80), branch_name_text, fill="#007C71", font=font_branch)
+        font_branch = ImageFont.truetype(FONT_PATH, 41)  # cỡ font tùy chỉnh
+        draw.text((471, 157), branch_name_text, fill="3C7471", font=font_branch)
 
     # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
