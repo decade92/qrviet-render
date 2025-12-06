@@ -277,7 +277,7 @@ def create_qr_with_text(data, acc_name, merchant_id, border=100, usage_ratio=0.8
     buf.seek(0)
     return buf
 
-def create_qr_with_background(data, acc_name, merchant_id, store_name, support_name="", support_phone=""):
+def create_qr_with_background(data, acc_name, merchant_id, store_name, staff_name="", staff_phone="", branch_name=""):
     # ===== Tạo QR =====
     qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
     qr.add_data(data)
@@ -311,7 +311,7 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, support_n
             text_width = draw.textbbox((0,0), text, font=font)[2]
         return font, font_size
 
-    # ===== Vẽ Tên tài khoản & Số tài khoản giống loa =====
+    # ===== Vẽ Tên tài khoản =====
     max_text_width = int(base_w * 0.7)
     y_offset = qr_y + qr_img.height + 130
 
@@ -323,9 +323,10 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, support_n
 
         font_acc, acc_font_size = get_font(acc_name.upper(), max_text_width, 48)
         x_acc = (base_w - draw.textbbox((0,0), acc_name.upper(), font=font_acc)[2]) // 2
-        draw.text((x_acc, y_offset), acc_name.upper(), fill=(0,102,102), font=font_acc)
+        draw.text((x_acc, y_offset), acc_name.upper(), fill="#007C71", font=font_acc)
         y_offset += acc_font_size + 45
 
+    # ===== Vẽ Số tài khoản =====
     if merchant_id and merchant_id.strip():
         label_merchant = "Số tài khoản:"
         x_label = (base_w - draw.textbbox((0,0), label_merchant, font=font_label)[2]) // 2
@@ -334,62 +335,68 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, support_n
 
         font_merchant, merchant_font_size = get_font(merchant_id, max_text_width, 46)
         x_merchant = (base_w - draw.textbbox((0,0), merchant_id, font=font_merchant)[2]) // 2
-        draw.text((x_merchant, y_offset), merchant_id, fill=(0,102,102), font=font_merchant)
+        draw.text((x_merchant, y_offset), merchant_id, fill="#007C71", font=font_merchant)
         y_offset += merchant_font_size + 55
-    # ===== Hiển thị Cán bộ hỗ trợ 1 dòng, căn trái =====
+
+    # ===== Vẽ Chi nhánh =====
+    if branch_name and branch_name.strip():
+        branch_display = "Chi nhánh " + branch_name.title()
+        font_branch = ImageFont.truetype(FONT_PATH, 36)
+        x_branch = (base_w - draw.textbbox((0,0), branch_display, font=font_branch)[2]) // 2
+        draw.text((x_branch, y_offset), branch_display, fill="#007C71", font=font_branch)
+        y_offset += 36 + 40
+
+    # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
     padding_bottom = 60
-    
-    if (support_name and support_name.strip()) or (support_phone and support_phone.strip()):
-        # Font chữ
-        font_support = ImageFont.truetype(FONT_LABELPATH, 34)
-    
-        # Nội dung từng phần
+    if (staff_name and staff_name.strip()) or (staff_phone and staff_phone.strip()):
+        font_staff = ImageFont.truetype(FONT_LABELPATH, 34)
         label_text = "Cán bộ hỗ trợ: "
-        contact_text = f"{support_name}" if support_name else ""
+        contact_text = staff_name if staff_name else ""
         label2_text = " - Liên hệ: "
-        phone_text = f"{support_phone}" if support_phone else ""
-    
-        # Tọa độ căn trái, căn dưới
+        phone_text = staff_phone if staff_phone else ""
+
         support_x = padding_left
-        support_y = base_h - 32 - padding_bottom  # 32 là font size ước lượng
-    
-        # Vẽ từng phần
-        draw.text((support_x, support_y), label_text, fill=(0,102,102), font=font_support)
-        offset_x = support_x + draw.textbbox((0,0), label_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), contact_text, fill=(255,0,0), font=font_support)
-        offset_x += draw.textbbox((0,0), contact_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), label2_text, fill=(0,102,102), font=font_support)
-        offset_x += draw.textbbox((0,0), label2_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), phone_text, fill=(255,0,0), font=font_support)
-        # Store name
-        store_font = ImageFont.truetype(FONT_PATH, 70)
-        if store_name and store_name.strip():
-            cx = lambda t, f: (base.width - draw.textbbox((0,0), t, font=f)[2]) // 2
-            draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
+        support_y = base_h - 32 - padding_bottom
+
+        draw.text((support_x, support_y), label_text, fill="#007C71", font=font_staff)
+        offset_x = support_x + draw.textbbox((0,0), label_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), contact_text, fill=(255,0,0), font=font_staff)
+        offset_x += draw.textbbox((0,0), contact_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), label2_text, fill="#007C71", font=font_staff)
+        offset_x += draw.textbbox((0,0), label2_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), phone_text, fill=(255,0,0), font=font_staff)
+
+    # ===== Vẽ Store name =====
+    store_font = ImageFont.truetype(FONT_PATH, 70)
+    if store_name and store_name.strip():
+        cx = lambda t, f: (base.width - draw.textbbox((0,0), t, font=f)[2]) // 2
+        draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
 
     # Lưu buffer
     buf = io.BytesIO()
     base.save(buf, format="PNG")
     buf.seek(0)
     return buf
-def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, support_name="", support_phone=""):
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=0)
+def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, staff_name="", staff_phone="", branch_name=""):
+    # ===== Tạo QR =====
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
     qr.add_data(data)
     qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((480, 520))
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((540, 540))
+    qr_img = round_corners(qr_img, 40)
 
-    # Thêm logo lên QR
+    # Logo trên QR
     logo = Image.open(LOGO_PATH).convert("RGBA").resize((100, 100))
     qr_img.paste(logo, ((qr_img.width - logo.width)//2, (qr_img.height - logo.height)//2), logo)
 
-    # Mở nền
-    base = Image.open(BG_THAI_PATH).convert("RGBA")
+    # Nền mèo thần tài
+    base = Image.open(BG_THANTAI_PATH).convert("RGBA")
     base_w, base_h = base.size
-    qr_x, qr_y = 793, 725
+    qr_x, qr_y = 460, 936
     base.paste(qr_img, (qr_x, qr_y), qr_img)
 
     draw = ImageDraw.Draw(base)
@@ -397,82 +404,83 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     # Font label
     font_label = ImageFont.truetype(FONT_LABELPATH, 46)
 
-    # Hàm giảm font nếu chữ dài, giới hạn max_width
+    # Hàm giảm font nếu chữ dài
     def get_font(text, max_width, base_size):
         font_size = base_size
         font = ImageFont.truetype(FONT_PATH, font_size)
-        text_width = draw.textbbox((0, 0), text, font=font)[2]
+        text_width = draw.textbbox((0,0), text, font=font)[2]
         while text_width > max_width and font_size > 12:
             font_size -= 1
             font = ImageFont.truetype(FONT_PATH, font_size)
-            text_width = draw.textbbox((0, 0), text, font=font)[2]
+            text_width = draw.textbbox((0,0), text, font=font)[2]
         return font, font_size
 
-    # Tối đa 70% chiều rộng nền
+    # ===== Vẽ Tên tài khoản =====
     max_text_width = int(base_w * 0.7)
-
-    # Vẽ Tên tài khoản và Số tài khoản căn giữa nền
-    y_offset = qr_y + qr_img.height + 360
+    y_offset = qr_y + qr_img.height + 130
 
     if acc_name and acc_name.strip():
         label_acc = "Tên tài khoản:"
-        text_width = draw.textbbox((0,0), label_acc, font=font_label)[2]
-        x_label = (base_w - text_width) // 2  # căn giữa nền
+        x_label = (base_w - draw.textbbox((0,0), label_acc, font=font_label)[2]) // 2
         draw.text((x_label, y_offset), label_acc, fill="black", font=font_label)
         y_offset += 28 + 30
 
         font_acc, acc_font_size = get_font(acc_name.upper(), max_text_width, 48)
-        text_width = draw.textbbox((0,0), acc_name.upper(), font=font_acc)[2]
-        x_acc = (base_w - text_width) // 2  # căn giữa nền
-        draw.text((x_acc, y_offset), acc_name.upper(), fill=(0,102,102), font=font_acc)
+        x_acc = (base_w - draw.textbbox((0,0), acc_name.upper(), font=font_acc)[2]) // 2
+        draw.text((x_acc, y_offset), acc_name.upper(), fill="#007C71", font=font_acc)
         y_offset += acc_font_size + 45
 
+    # ===== Vẽ Số tài khoản =====
     if merchant_id and merchant_id.strip():
         label_merchant = "Số tài khoản:"
-        text_width = draw.textbbox((0,0), label_merchant, font=font_label)[2]
-        x_label = (base_w - text_width) // 2  # căn giữa nền
+        x_label = (base_w - draw.textbbox((0,0), label_merchant, font=font_label)[2]) // 2
         draw.text((x_label, y_offset), label_merchant, fill="black", font=font_label)
         y_offset += 28 + 30
 
         font_merchant, merchant_font_size = get_font(merchant_id, max_text_width, 46)
-        text_width = draw.textbbox((0,0), merchant_id, font=font_merchant)[2]
-        x_merchant = (base_w - text_width) // 2  # căn giữa nền
-        draw.text((x_merchant, y_offset), merchant_id, fill=(0,102,102), font=font_merchant)
-        y_offset += merchant_font_size + 35
-    # ===== Hiển thị Cán bộ hỗ trợ 1 dòng, căn trái =====
+        x_merchant = (base_w - draw.textbbox((0,0), merchant_id, font=font_merchant)[2]) // 2
+        draw.text((x_merchant, y_offset), merchant_id, fill="#007C71", font=font_merchant)
+        y_offset += merchant_font_size + 55
+
+    # ===== Vẽ Chi nhánh =====
+    if branch_name and branch_name.strip():
+        branch_display = "Chi nhánh " + branch_name.title()
+        font_branch = ImageFont.truetype(FONT_PATH, 36)
+        x_branch = (base_w - draw.textbbox((0,0), branch_display, font=font_branch)[2]) // 2
+        draw.text((x_branch, y_offset), branch_display, fill="#007C71", font=font_branch)
+        y_offset += 36 + 40
+
+    # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
     padding_bottom = 60
-    
-    if (support_name and support_name.strip()) or (support_phone and support_phone.strip()):
-        # Font chữ
-        font_support = ImageFont.truetype(FONT_LABELPATH, 34)
-    
-        # Nội dung từng phần
+    if (staff_name and staff_name.strip()) or (staff_phone and staff_phone.strip()):
+        font_staff = ImageFont.truetype(FONT_LABELPATH, 34)
         label_text = "Cán bộ hỗ trợ: "
-        contact_text = f"{support_name}" if support_name else ""
+        contact_text = staff_name if staff_name else ""
         label2_text = " - Liên hệ: "
-        phone_text = f"{support_phone}" if support_phone else ""
-    
-        # Tọa độ căn trái, căn dưới
-        support_x = padding_left
-        support_y = base_h - 32 - padding_bottom  # 32 là font size ước lượng
-    
-        # Vẽ từng phần
-        draw.text((support_x, support_y), label_text, fill=(0,102,102), font=font_support)
-        offset_x = support_x + draw.textbbox((0,0), label_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), contact_text, fill=(255,0,0), font=font_support)
-        offset_x += draw.textbbox((0,0), contact_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), label2_text, fill=(0,102,102), font=font_support)
-        offset_x += draw.textbbox((0,0), label2_text, font=font_support)[2]
-    
-        draw.text((offset_x, support_y), phone_text, fill=(255,0,0), font=font_support)
-    # Store name
-    store_font = ImageFont.truetype(FONT_PATH, 70)
-    cx = lambda t, f: (base.width - draw.textbbox((0, 0), t, font=f)[2]) // 2
-    draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
+        phone_text = staff_phone if staff_phone else ""
 
+        support_x = padding_left
+        support_y = base_h - 32 - padding_bottom
+
+        draw.text((support_x, support_y), label_text, fill="#007C71", font=font_staff)
+        offset_x = support_x + draw.textbbox((0,0), label_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), contact_text, fill=(255,0,0), font=font_staff)
+        offset_x += draw.textbbox((0,0), contact_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), label2_text, fill="#007C71", font=font_staff)
+        offset_x += draw.textbbox((0,0), label2_text, font=font_staff)[2]
+
+        draw.text((offset_x, support_y), phone_text, fill=(255,0,0), font=font_staff)
+
+    # ===== Vẽ Store name =====
+    store_font = ImageFont.truetype(FONT_PATH, 70)
+    if store_name and store_name.strip():
+        cx = lambda t, f: (base.width - draw.textbbox((0,0), t, font=f)[2]) // 2
+        draw.text((cx(store_name.upper(), store_font), 265), store_name.upper(), fill="#007C71", font=store_font)
+
+    # Lưu buffer
     buf = io.BytesIO()
     base.save(buf, format="PNG")
     buf.seek(0)
@@ -746,6 +754,9 @@ account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("ac
 # Làm sạch dữ liệu: bỏ khoảng trắng dư thừa
 account = ''.join(account.split())
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""), key="name")
+branch_display = ""
+if st.session_state.get("branch_name"):
+    branch_display = "Chi nhánh " + st.session_state["branch_name"].title()
 store = st.text_input("🏪 Tên cửa hàng (nếu có)", value=st.session_state.get("store", ""), key="store")
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""), key="note")
 bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
@@ -753,15 +764,8 @@ amount = ''.join(str(st.session_state.get("amount", "")).split())
 merchant_id = ''.join(account.split())  # nếu bạn dùng account làm merchant_id
 
 # === Danh sách cán bộ hỗ trợ ===
-staff_list = {
-    "": ("", ""),
-    "Vũ Hoàng Phát - PGD Tiền Hải": ("Vũ Hoàng Phát", "0986.155.838"),
-    "Lê Thị Liên - PGD Tiền Hải": ("Lê Thị Liên", "0976.239.278"),
-    "Chu Thị Thu Hiền - BIDV Tiền Hải": ("Chu Thị Thu Hiền", "0989.557.699"),
-}
-
-selected_staff = st.selectbox("👨‍💼 Cán bộ hỗ trợ", list(staff_list.keys()), key="staff_selected")
-staff_name, staff_phone = staff_list[selected_staff]
+staff_name = st.text_input("👨‍💼 Tên cán bộ hỗ trợ", value=st.session_state.get("staff_name", ""), key="staff_name")
+staff_phone = st.text_input("📞 Số điện thoại cán bộ hỗ trợ", value=st.session_state.get("staff_phone", ""), key="staff_phone")
 # Xử lý đầu vào số tiền
 amount_input_raw = st.text_input("💰 Số tiền (nếu có)", value=st.session_state.get("amount", ""), key="amount_input")
 amount_cleaned = clean_amount_input(amount_input_raw)
