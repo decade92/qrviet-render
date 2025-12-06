@@ -339,12 +339,15 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, staff_nam
         y_offset += merchant_font_size + 55
 
     # ===== Vẽ Chi nhánh =====
+    # Chuẩn hóa branch_name: viết hoa chữ cái đầu của mỗi từ
+    def normalize_branch_name(name: str) -> str:
+        return " ".join([w.capitalize() for w in name.strip().split()]) if name else ""
+    
+    # Trong create_qr_with_background hoặc create_qr_with_background_thantai
     if branch_name and branch_name.strip():
-        branch_display = "Chi nhánh " + branch_name.title()
-        font_branch = ImageFont.truetype(FONT_PATH, 36)
-        x_branch = (base_w - draw.textbbox((0,0), branch_display, font=font_branch)[2]) // 2
-        draw.text((x_branch, y_offset), branch_display, fill="#007C71", font=font_branch)
-        y_offset += 36 + 40
+        branch_name_text = "Chi nhánh " + normalize_branch_name(branch_name)
+        font_branch = ImageFont.truetype(FONT_PATH, 50)  # cỡ font tùy chỉnh
+        draw.text((470, 80), branch_name_text, fill="#007C71", font=font_branch)
 
     # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
@@ -396,7 +399,7 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     # Nền mèo thần tài
     base = Image.open(BG_THAI_PATH).convert("RGBA")
     base_w, base_h = base.size
-    qr_x, qr_y = 460, 936
+    qr_x, qr_y = 793, 725
     base.paste(qr_img, (qr_x, qr_y), qr_img)
 
     draw = ImageDraw.Draw(base)
@@ -443,12 +446,15 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
         y_offset += merchant_font_size + 55
 
     # ===== Vẽ Chi nhánh =====
+    # Chuẩn hóa branch_name: viết hoa chữ cái đầu của mỗi từ
+    def normalize_branch_name(name: str) -> str:
+        return " ".join([w.capitalize() for w in name.strip().split()]) if name else ""
+    
+    # Trong create_qr_with_background hoặc create_qr_with_background_thantai
     if branch_name and branch_name.strip():
-        branch_display = "Chi nhánh " + branch_name.title()
-        font_branch = ImageFont.truetype(FONT_PATH, 36)
-        x_branch = (base_w - draw.textbbox((0,0), branch_display, font=font_branch)[2]) // 2
-        draw.text((x_branch, y_offset), branch_display, fill="#007C71", font=font_branch)
-        y_offset += 36 + 40
+        branch_name_text = "Chi nhánh " + normalize_branch_name(branch_name)
+        font_branch = ImageFont.truetype(FONT_PATH, 50)  # cỡ font tùy chỉnh
+        draw.text((470, 80), branch_name_text, fill="#007C71", font=font_branch)
 
     # ===== Hiển thị Staff (Cán bộ hỗ trợ) =====
     padding_left = 70
