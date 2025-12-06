@@ -754,8 +754,7 @@ account = st.text_input("🔢 Số tài khoản", value=st.session_state.get("ac
 account = ''.join(account.split())
 name = st.text_input("👤 Tên tài khoản (nếu có)", value=st.session_state.get("name", ""), key="name")
 branch_display = ""
-if st.session_state.get("branch_name"):
-    branch_display = "Chi nhánh " + st.session_state["branch_name"].title()
+branch_name = st.text_input("🏢 Tên Chi nhánh", value=st.session_state.get("branch_name", ""), key="branch_name")
 store = st.text_input("🏪 Tên cửa hàng (nếu có)", value=st.session_state.get("store", ""), key="store")
 note = st.text_input("📝 Nội dung (nếu có)", value=st.session_state.get("note", ""), key="note")
 bank_bin = ''.join(st.session_state.get("bank_bin", "970418").split())
