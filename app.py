@@ -386,17 +386,16 @@ def create_qr_with_background(data, acc_name, merchant_id, store_name, staff_nam
     return buf
 def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, staff_name="", staff_phone="", branch_name=""):
     # ===== Tạo QR =====
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=2)
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=0)
     qr.add_data(data)
     qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((540, 540))
-    qr_img = round_corners(qr_img, 40)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA").resize((480, 520))
 
-    # Logo trên QR
+    # Thêm logo lên QR
     logo = Image.open(LOGO_PATH).convert("RGBA").resize((100, 100))
     qr_img.paste(logo, ((qr_img.width - logo.width)//2, (qr_img.height - logo.height)//2), logo)
 
-    # Nền mèo thần tài
+    # Mở nền
     base = Image.open(BG_THAI_PATH).convert("RGBA")
     base_w, base_h = base.size
     qr_x, qr_y = 793, 725
@@ -407,43 +406,50 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     # Font label
     font_label = ImageFont.truetype(FONT_LABELPATH, 46)
 
-    # Hàm giảm font nếu chữ dài
+    # Hàm giảm font nếu chữ dài, giới hạn max_width
     def get_font(text, max_width, base_size):
         font_size = base_size
         font = ImageFont.truetype(FONT_PATH, font_size)
-        text_width = draw.textbbox((0,0), text, font=font)[2]
+        text_width = draw.textbbox((0, 0), text, font=font)[2]
         while text_width > max_width and font_size > 12:
             font_size -= 1
             font = ImageFont.truetype(FONT_PATH, font_size)
-            text_width = draw.textbbox((0,0), text, font=font)[2]
+            text_width = draw.textbbox((0, 0), text, font=font)[2]
         return font, font_size
 
-    # ===== Vẽ Tên tài khoản =====
+    # Tối đa 70% chiều rộng nền
     max_text_width = int(base_w * 0.7)
-    y_offset = qr_y + qr_img.height + 130
 
+    # Vẽ Tên tài khoản và Số tài khoản căn giữa nền
+    y_offset = qr_y + qr_img.height + 360
     if acc_name and acc_name.strip():
         label_acc = "Tên tài khoản:"
-        x_label = (base_w - draw.textbbox((0,0), label_acc, font=font_label)[2]) // 2
+        text_width = draw.textbbox((0,0), label_acc, font=font_label)[2]
+        x_label = (base_w - text_width) // 2  # căn giữa nền
         draw.text((x_label, y_offset), label_acc, fill="black", font=font_label)
         y_offset += 28 + 30
 
         font_acc, acc_font_size = get_font(acc_name.upper(), max_text_width, 48)
-        x_acc = (base_w - draw.textbbox((0,0), acc_name.upper(), font=font_acc)[2]) // 2
-        draw.text((x_acc, y_offset), acc_name.upper(), fill="#007C71", font=font_acc)
+        text_width = draw.textbbox((0,0), acc_name.upper(), font=font_acc)[2]
+        x_acc = (base_w - text_width) // 2  # căn giữa nền
+        draw.text((x_acc, y_offset), acc_name.upper(), fill=(0,102,102), font=font_acc)
         y_offset += acc_font_size + 45
 
-    # ===== Vẽ Số tài khoản =====
     if merchant_id and merchant_id.strip():
         label_merchant = "Số tài khoản:"
-        x_label = (base_w - draw.textbbox((0,0), label_merchant, font=font_label)[2]) // 2
+        text_width = draw.textbbox((0,0), label_merchant, font=font_label)[2]
+        x_label = (base_w - text_width) // 2  # căn giữa nền
         draw.text((x_label, y_offset), label_merchant, fill="black", font=font_label)
         y_offset += 28 + 30
 
         font_merchant, merchant_font_size = get_font(merchant_id, max_text_width, 46)
-        x_merchant = (base_w - draw.textbbox((0,0), merchant_id, font=font_merchant)[2]) // 2
-        draw.text((x_merchant, y_offset), merchant_id, fill="#007C71", font=font_merchant)
-        y_offset += merchant_font_size + 55
+        text_width = draw.textbbox((0,0), merchant_id, font=font_merchant)[2]
+        x_merchant = (base_w - text_width) // 2  # căn giữa nền
+        draw.text((x_merchant, y_offset), merchant_id, fill=(0,102,102), font=font_merchant)
+        y_offset += merchant_font_size + 35
+    # ===== Hiển thị Cán bộ hỗ trợ 1 dòng, căn trái =====
+    padding_left = 70
+    padding_bottom = 60
 
     # ===== Vẽ Chi nhánh =====
     # Chuẩn hóa branch_name: viết hoa chữ cái đầu của mỗi từ
