@@ -1,8 +1,8 @@
 streamlit
-qrcode
+qrcode[pil]
 Pillow
 numpy
 opencv-python-headless
+pyzbar
 requests
 beautifulsoup4
-pyzbar
