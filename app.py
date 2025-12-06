@@ -394,7 +394,7 @@ def create_qr_with_background_thantai(data, acc_name, merchant_id, store_name, s
     qr_img.paste(logo, ((qr_img.width - logo.width)//2, (qr_img.height - logo.height)//2), logo)
 
     # Nền mèo thần tài
-    base = Image.open(BG_THANTAI_PATH).convert("RGBA")
+    base = Image.open(BG_THAI_PATH).convert("RGBA")
     base_w, base_h = base.size
     qr_x, qr_y = 460, 936
     base.paste(qr_img, (qr_x, qr_y), qr_img)
